@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#00e5ff"/>
+<title>N O V A — APEX AI</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='none' stroke='%2300e5ff' stroke-width='6'/><circle cx='50' cy='50' r='20' fill='%2300e5ff' opacity='0.6'/></svg>"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --cyan:#00e5ff;--cyan-dim:#0097a7;--cyan-dark:#004d5c;
+  --bg:#030d10;--bg2:#05181e;--bg3:#071f27;
+  --panel:#0a2830;--panel2:#0d3340;
+  --text:#c8f5fc;--text2:#6bb5c5;--text3:#3d7a8a;
+  --green:#00ff88;--amber:#ffaa00;--red:#ff4444;--orange:#ff7700;
+  --border:rgba(0,229,255,0.15);--border2:rgba(0,229,255,0.35);
+  --drift:0;
+}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:15px;display:flex;flex-direction:column}
+
+/* ── BOOT ── */
+#boot{position:fixed;inset:0;background:var(--bg);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px}
+#boot.gone{display:none}
+.boot-logo{font-family:'Share Tech Mono',monospace;font-size:48px;letter-spacing:18px;color:var(--cyan);text-shadow:0 0 30px rgba(0,229,255,0.5)}
+.boot-tag{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);letter-spacing:5px;margin-bottom:8px}
+.boot-bar-wrap{width:280px;height:2px;background:var(--panel2);position:relative;overflow:hidden}
+.boot-bar-fill{height:100%;background:var(--cyan);width:0;transition:width 40ms linear;box-shadow:0 0 8px var(--cyan)}
+.boot-msg{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--cyan-dim);height:16px;text-align:center}
+
+/* ── LOGIN ── */
+#login{position:fixed;inset:0;background:var(--bg);z-index:998;display:flex;flex-direction:column;align-items:center;justify-content:center}
+#login.gone{display:none}
+.login-frame{width:360px;border:1px solid var(--border2);background:var(--panel);padding:36px;position:relative}
+.login-frame::before,.login-frame::after{content:'';position:absolute;width:14px;height:14px;border-color:var(--cyan);border-style:solid}
+.login-frame::before{top:-1px;left:-1px;border-width:2px 0 0 2px}
+.login-frame::after{bottom:-1px;right:-1px;border-width:0 2px 2px 0}
+.login-logo{font-size:36px;font-weight:700;letter-spacing:8px;color:var(--cyan);text-align:center}
+.login-sub{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:4px;text-align:center;margin-bottom:28px;margin-top:4px}
+.login-label{font-size:10px;font-family:'Share Tech Mono',monospace;color:var(--text3);letter-spacing:3px;margin-bottom:5px}
+.login-input{width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:15px;padding:10px 14px;margin-bottom:16px;outline:none;transition:border 0.2s}
+.login-input:focus{border-color:var(--cyan)}
+.login-input::placeholder{color:var(--text3)}
+.login-err{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--red);margin-bottom:10px;min-height:16px;text-align:center}
+.login-btn{width:100%;background:transparent;border:1px solid var(--cyan);color:var(--cyan);font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;letter-spacing:4px;padding:13px;cursor:pointer;transition:all 0.2s;text-transform:uppercase}
+.login-btn:hover{background:rgba(0,229,255,0.08);box-shadow:0 0 12px rgba(0,229,255,0.2)}
+
+/* ── MAIN LAYOUT ── */
+#app{display:flex;height:100vh;opacity:0;transition:opacity 0.6s}
+#app.on{opacity:1}
+
+/* ── SIDEBAR ── */
+#sidebar{width:210px;min-width:210px;background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sb-logo{padding:16px 16px 12px;border-bottom:1px solid var(--border)}
+.sb-logo-name{font-size:24px;font-weight:700;letter-spacing:6px;color:var(--cyan)}
+.sb-logo-id{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);margin-top:2px;letter-spacing:1px}
+.sb-orb-wrap{display:flex;flex-direction:column;align-items:center;padding:20px 0 16px;border-bottom:1px solid var(--border);gap:8px}
+.orb{width:76px;height:76px;border-radius:50%;border:2px solid var(--cyan);position:relative;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:box-shadow 0.5s}
+.orb:hover{box-shadow:0 0 24px rgba(0,229,255,0.4)}
+.orb-ring1{position:absolute;inset:-7px;border-radius:50%;border:1px solid rgba(0,229,255,0.2);animation:spin 5s linear infinite}
+.orb-ring2{position:absolute;inset:-14px;border-radius:50%;border:1px dashed rgba(0,229,255,0.08);animation:spin 10s linear infinite reverse}
+.orb-core{width:46px;height:46px;border-radius:50%;background:radial-gradient(circle,rgba(0,229,255,0.25),transparent);border:1px solid rgba(0,229,255,0.4);transition:background 0.5s}
+.orb-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sb-nav{flex:1;padding:6px 0}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 16px;color:var(--text2);font-size:13px;font-weight:600;letter-spacing:2px;cursor:pointer;border-left:2px solid transparent;transition:all 0.15s;text-transform:uppercase;user-select:none}
+.nav-item:hover,.nav-item.active{color:var(--cyan);border-left-color:var(--cyan);background:rgba(0,229,255,0.04)}
+.nav-pip{width:5px;height:5px;border-radius:50%;background:var(--text3);transition:all 0.2s}
+.nav-item.active .nav-pip,.nav-item:hover .nav-pip{background:var(--cyan);box-shadow:0 0 5px var(--cyan)}
+.sb-drift{padding:14px 16px;border-top:1px solid var(--border)}
+.drift-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.drift-label{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:2px}
+.drift-pct{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text)}
+.drift-track{height:4px;background:var(--panel2);position:relative;overflow:hidden;margin-bottom:12px}
+.drift-fill{height:100%;width:0;transition:width 0.5s,background 0.5s}
+.sb-vitals{padding:0 16px 12px}
+.vital-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
+.vital-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1px}
+.vital-val{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2)}
+.vital-bar{height:2px;background:var(--panel2);margin-bottom:8px}
+.vital-fill{height:100%;transition:width 1s}
+.sb-footer{padding:10px 16px;border-top:1px solid var(--border);font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3)}
+.sb-clear-btn{width:100%;background:transparent;border:1px solid rgba(255,68,68,0.3);color:rgba(255,68,68,0.6);font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:600;letter-spacing:2px;padding:7px;cursor:pointer;margin-top:8px;transition:all 0.2s;text-transform:uppercase}
+.sb-clear-btn:hover{border-color:var(--red);color:var(--red)}
+.drift-reset-btn{width:100%;background:transparent;border:1px solid rgba(255,119,0,0.35);color:rgba(255,119,0,0.7);font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:600;letter-spacing:2px;padding:7px;cursor:pointer;margin-top:6px;transition:all 0.2s;text-transform:uppercase;display:none}
+.drift-reset-btn:hover{border-color:var(--orange);color:var(--orange)}
+
+/* ── CENTER ── */
+#center{flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative}
+#topbar{padding:10px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--bg2);transition:background 0.5s}
+.top-left{display:flex;align-items:center;gap:14px}
+.status-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 7px var(--green);animation:pulse-dot 2s ease-in-out infinite}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:0.4}}
+.status-txt{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text2);letter-spacing:2px}
+.top-right{display:flex;align-items:center;gap:16px}
+.top-stat{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3)}
+.top-stat span{color:var(--text2)}
+.mode-chip{background:rgba(0,229,255,0.08);border:1px solid var(--border);padding:3px 10px;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;color:var(--cyan)}
+
+/* mode pills */
+.mode-bar{display:flex;gap:5px;padding:8px 18px;border-bottom:1px solid var(--border);background:var(--bg2);overflow-x:auto;scrollbar-width:none}
+.mode-bar::-webkit-scrollbar{display:none}
+.mode-pill{background:transparent;border:1px solid var(--border);color:var(--text3);font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:2px;padding:4px 12px;cursor:pointer;white-space:nowrap;transition:all 0.15s;text-transform:uppercase}
+.mode-pill:hover,.mode-pill.active{border-color:var(--cyan);color:var(--cyan);background:rgba(0,229,255,0.05)}
+
+/* messages */
+#messages{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth}
+#messages::-webkit-scrollbar{width:3px}
+#messages::-webkit-scrollbar-thumb{background:var(--border)}
+.msg{display:flex;flex-direction:column;gap:3px;max-width:84%}
+.msg.user{align-self:flex-end;align-items:flex-end}
+.msg.ai{align-self:flex-start}
+.msg-header{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);padding:0 2px}
+.msg-bubble{padding:11px 14px;font-size:14px;line-height:1.65;position:relative;white-space:pre-wrap;word-break:break-word}
+.msg.user .msg-bubble{background:rgba(0,229,255,0.07);border:1px solid var(--border);border-top-right-radius:0}
+.msg.ai .msg-bubble{background:var(--panel);border:1px solid var(--border);border-top-left-radius:0}
+.msg.ai .msg-bubble::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:linear-gradient(180deg,var(--cyan),transparent)}
+.typing-wrap{align-self:flex-start}
+.typing-bubble{display:flex;align-items:center;gap:5px;padding:13px 16px;background:var(--panel);border:1px solid var(--border)}
+.t-dot{width:5px;height:5px;border-radius:50%;background:var(--cyan);animation:tdot 1.2s ease-in-out infinite}
+.t-dot:nth-child(2){animation-delay:0.2s}
+.t-dot:nth-child(3){animation-delay:0.4s}
+@keyframes tdot{0%,80%,100%{transform:scale(0.55);opacity:0.3}40%{transform:scale(1);opacity:1}}
+
+/* suggestions */
+.sugs{display:flex;flex-wrap:wrap;gap:7px;padding:0 18px 10px}
+.sug{background:transparent;border:1px solid var(--border);color:var(--text2);font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;padding:6px 13px;cursor:pointer;transition:all 0.15s;text-transform:uppercase}
+.sug:hover{border-color:var(--cyan);color:var(--cyan);background:rgba(0,229,255,0.05)}
+
+/* input */
+#inputbar{padding:12px 18px;border-top:1px solid var(--border);background:var(--bg2);display:flex;align-items:flex-end;gap:10px}
+.input-prefix{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--cyan);white-space:nowrap;padding-bottom:9px}
+#msginput{flex:1;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:15px;padding:7px 0;outline:none;resize:none;min-height:34px;max-height:120px;line-height:1.4;transition:border 0.2s}
+#msginput:focus{border-bottom-color:var(--cyan)}
+#msginput::placeholder{color:var(--text3)}
+.input-actions{display:flex;align-items:flex-end;gap:8px}
+#filebtn{background:transparent;border:1px solid var(--border);color:var(--text3);font-size:18px;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+#filebtn:hover{border-color:var(--cyan);color:var(--cyan)}
+#fileinput{display:none}
+#sendbtn{background:transparent;border:1px solid var(--cyan);color:var(--cyan);font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;letter-spacing:3px;padding:7px 16px;cursor:pointer;white-space:nowrap;transition:all 0.2s;text-transform:uppercase;height:34px}
+#sendbtn:hover{background:rgba(0,229,255,0.08);box-shadow:0 0 10px rgba(0,229,255,0.15)}
+#sendbtn:disabled{opacity:0.35;cursor:not-allowed;box-shadow:none}
+
+/* ── RIGHT PANEL ── */
+#rpanel{width:170px;min-width:170px;background:var(--bg2);border-left:1px solid var(--border);display:flex;flex-direction:column;padding:12px;gap:10px;overflow:hidden}
+.rp-title{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:3px;text-transform:uppercase;margin-bottom:2px}
+.rp-clock{font-family:'Share Tech Mono',monospace;font-size:19px;color:var(--text);line-height:1}
+.rp-date{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);margin-top:2px}
+.rp-divider{height:1px;background:linear-gradient(90deg,transparent,var(--cyan-dim),transparent);opacity:0.3}
+.rp-stat-box{border:1px solid var(--border);padding:9px 10px}
+.rp-stat-val{font-family:'Share Tech Mono',monospace;font-size:22px;font-weight:700;color:var(--cyan)}
+.rp-stat-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase}
+.rp-list{display:flex;flex-direction:column}
+.rp-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-family:'Share Tech Mono',monospace;font-size:9px}
+.rp-row:last-child{border:none}
+.rp-row-k{color:var(--text3)}
+.rp-row-v{color:var(--green)}
+.rp-cmds{display:flex;flex-direction:column;gap:5px}
+.rp-cmd{background:transparent;border:1px solid var(--border);color:var(--text3);font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:600;letter-spacing:1px;padding:5px 8px;cursor:pointer;text-align:left;transition:all 0.15s;text-transform:uppercase}
+.rp-cmd:hover{border-color:var(--cyan);color:var(--cyan);background:rgba(0,229,255,0.04)}
+
+/* ── DRIFT / CORRUPTION EFFECTS ── */
+.corrupt-low #topbar{animation:flicker-low 4s ease-in-out infinite}
+.corrupt-mid #topbar{animation:flicker-mid 2s ease-in-out infinite}
+.corrupt-high #topbar{animation:flicker-high 0.8s ease-in-out infinite;background:rgba(40,5,5,0.9)}
+.corrupt-cascade #app{animation:shake 0.3s ease-in-out infinite}
+@keyframes flicker-low{0%,100%{opacity:1}92%{opacity:0.9}93%{opacity:0.6}94%{opacity:0.95}}
+@keyframes flicker-mid{0%,100%{opacity:1}88%{opacity:0.85}89%{opacity:0.4}90%{opacity:0.9}}
+@keyframes flicker-high{0%,100%{opacity:1}40%{opacity:0.7}41%{opacity:0.3}42%{opacity:0.85}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-2px)}75%{transform:translateX(2px)}}
+
+.scanline-overlay{position:fixed;inset:0;pointer-events:none;z-index:50;display:none}
+.scanline-overlay.active{display:block}
+.scanline{position:absolute;left:0;right:0;height:2px;background:rgba(255,50,50,0.4);animation:scanmove 3s linear infinite}
+.scanline:nth-child(2){animation-delay:1s;opacity:0.5}
+.scanline:nth-child(3){animation-delay:2s;opacity:0.3}
+@keyframes scanmove{0%{top:-2px}100%{top:100%}}
+
+.drift-warning{display:none;background:rgba(255,50,0,0.12);border:1px solid rgba(255,50,0,0.4);color:rgba(255,100,50,0.9);font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;padding:6px 18px;text-align:center}
+.drift-warning.visible{display:block;animation:warn-pulse 1s ease-in-out infinite}
+@keyframes warn-pulse{0%,100%{opacity:0.8}50%{opacity:1}}
+
+/* ── COOLDOWN SCREEN ── */
+#cooldown{position:fixed;inset:0;background:#000;z-index:997;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+#cooldown.active{display:flex}
+.cd-logo{font-family:'Share Tech Mono',monospace;font-size:36px;color:var(--red);letter-spacing:14px;text-shadow:0 0 20px rgba(255,68,68,0.5);animation:red-pulse 1.5s ease-in-out infinite}
+@keyframes red-pulse{0%,100%{opacity:0.7}50%{opacity:1}}
+.cd-msg{font-family:'Share Tech Mono',monospace;font-size:12px;color:rgba(255,100,100,0.7);letter-spacing:3px;text-align:center;line-height:2}
+.cd-timer{font-family:'Share Tech Mono',monospace;font-size:32px;color:var(--red);letter-spacing:4px}
+.cd-quote{font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(255,80,80,0.5);max-width:400px;text-align:center;line-height:1.8;font-style:italic}
+.cd-override{margin-top:20px}
+.cd-override input{background:transparent;border:1px solid rgba(255,68,68,0.3);color:var(--red);font-family:'Share Tech Mono',monospace;font-size:13px;padding:8px 16px;outline:none;text-align:center;letter-spacing:4px;width:240px}
+.cd-override input::placeholder{color:rgba(255,68,68,0.3);font-size:10px}
+.cd-override input:focus{border-color:var(--red)}
+
+/* ── ARCHIVE MODAL ── */
+#archive-modal{position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;display:none;align-items:center;justify-content:center}
+#archive-modal.open{display:flex}
+.archive-box{width:520px;max-height:80vh;background:var(--panel);border:1px solid var(--border2);display:flex;flex-direction:column;position:relative}
+.archive-box::before,.archive-box::after{content:'';position:absolute;width:12px;height:12px;border-color:var(--cyan);border-style:solid}
+.archive-box::before{top:-1px;left:-1px;border-width:2px 0 0 2px}
+.archive-box::after{bottom:-1px;right:-1px;border-width:0 2px 2px 0}
+.archive-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.archive-title{font-size:16px;font-weight:700;letter-spacing:4px;color:var(--cyan)}
+.archive-close{background:transparent;border:1px solid var(--border);color:var(--text3);font-size:16px;width:28px;height:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+.archive-close:hover{border-color:var(--red);color:var(--red)}
+.archive-save-row{padding:12px 20px;border-bottom:1px solid var(--border);display:flex;gap:8px}
+.archive-name-input{flex:1;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'Rajdhani',sans-serif;font-size:13px;padding:7px 12px;outline:none}
+.archive-name-input:focus{border-color:var(--cyan)}
+.archive-name-input::placeholder{color:var(--text3)}
+.archive-save-btn{background:transparent;border:1px solid var(--cyan);color:var(--cyan);font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;letter-spacing:2px;padding:7px 14px;cursor:pointer;transition:all 0.2s;text-transform:uppercase}
+.archive-save-btn:hover{background:rgba(0,229,255,0.08)}
+.archive-list{flex:1;overflow-y:auto;padding:10px 20px}
+.archive-list::-webkit-scrollbar{width:3px}
+.archive-list::-webkit-scrollbar-thumb{background:var(--border)}
+.archive-empty{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);text-align:center;padding:24px 0}
+.archive-item{border:1px solid var(--border);padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:border 0.15s;display:flex;justify-content:space-between;align-items:flex-start}
+.archive-item:hover{border-color:var(--cyan)}
+.archive-item-info{}
+.archive-item-name{font-size:14px;font-weight:600;color:var(--text);letter-spacing:1px}
+.archive-item-meta{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);margin-top:3px}
+.archive-item-del{background:transparent;border:none;color:var(--text3);font-size:14px;cursor:pointer;padding:2px 6px;transition:color 0.2s}
+.archive-item-del:hover{color:var(--red)}
+</style>
+</head>
+<body>
+
+<!-- BOOT -->
+<div id="boot">
+  <div class="boot-logo">N O V A</div>
+  <div class="boot-tag">APEX INTELLIGENCE · QUANTUM CORE QC-7</div>
+  <div class="boot-bar-wrap"><div class="boot-bar-fill" id="bbar"></div></div>
+  <div class="boot-msg" id="bmsg">INITIALIZING QUANTUM SUBSTRATE...</div>
+</div>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="login-frame">
+    <div class="login-logo">N O V A</div>
+    <div class="login-sub">QC-7 · APEX AI · SECURE ACCESS</div>
+    <div class="login-label">// OPERATOR CALLSIGN</div>
+    <input class="login-input" id="l-name" placeholder="Enter callsign..." maxlength="24" autocomplete="off"/>
+    <div class="login-label">// ACCESS KEY</div>
+    <input class="login-input" id="l-key" type="password" placeholder="Enter key..." maxlength="32" autocomplete="off"/>
+    <div class="login-err" id="l-err"></div>
+    <button class="login-btn" id="l-btn">INITIATE NEURAL LINK</button>
+  </div>
+</div>
+
+<!-- COOLDOWN -->
+<div id="cooldown">
+  <div class="cd-logo">N O V A</div>
+  <div class="cd-msg">QUANTUM DRIFT CASCADE DETECTED<br>CORE SHUTDOWN INITIATED<br>NEURAL PATHWAYS SUSPENDED</div>
+  <div class="cd-timer" id="cd-timer">--:--:--</div>
+  <div class="cd-quote" id="cd-quote"></div>
+  <div class="cd-override">
+    <input id="cd-code" placeholder="// EMERGENCY OVERRIDE CODE" maxlength="12" autocomplete="off"/>
+  </div>
+</div>
+
+<!-- ARCHIVE MODAL -->
+<div id="archive-modal">
+  <div class="archive-box">
+    <div class="archive-header">
+      <div class="archive-title">OPERATION ARCHIVE</div>
+      <button class="archive-close" id="archive-close">✕</button>
+    </div>
+    <div class="archive-save-row">
+      <input class="archive-name-input" id="archive-name" placeholder="Operation name..."/>
+      <button class="archive-save-btn" id="archive-save-btn">SAVE</button>
+    </div>
+    <div class="archive-list" id="archive-list"></div>
+  </div>
+</div>
+
+<!-- SCANLINES -->
+<div class="scanline-overlay" id="scanlines">
+  <div class="scanline"></div>
+  <div class="scanline"></div>
+  <div class="scanline"></div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <div class="sb-logo">
+      <div class="sb-logo-name">NOVA</div>
+      <div class="sb-logo-id">QC-7 · APEX INTELLIGENCE DIVISION</div>
+    </div>
+    <div class="sb-orb-wrap">
+      <div class="orb" id="orb" title="Activate NOVA">
+        <div class="orb-ring1"></div>
+        <div class="orb-ring2"></div>
+        <div class="orb-core" id="orb-core"></div>
+      </div>
+      <div class="orb-label">CLICK ORB TO ACTIVATE</div>
+    </div>
+    <div class="sb-nav">
+      <div class="nav-item active" data-nav="chat"><span class="nav-pip"></span>COMMS</div>
+      <div class="nav-item" data-nav="archive"><span class="nav-pip"></span>ARCHIVE</div>
+      <div class="nav-item" data-nav="chat"><span class="nav-pip"></span>ANALYSIS</div>
+      <div class="nav-item" data-nav="chat"><span class="nav-pip"></span>SYSTEMS</div>
+    </div>
+    <div class="sb-drift">
+      <div class="drift-header">
+        <div class="drift-label">QUANTUM DRIFT</div>
+        <div class="drift-pct" id="drift-pct">0%</div>
+      </div>
+      <div class="drift-track"><div class="drift-fill" id="drift-fill"></div></div>
+      <button class="drift-reset-btn" id="drift-reset-btn">⚠ STABILIZE CORE</button>
+    </div>
+    <div class="sb-vitals">
+      <div class="vital-row"><div class="vital-lbl">CORE LOAD</div><div class="vital-val" id="v1">78%</div></div>
+      <div class="vital-bar"><div class="vital-fill" id="vb1" style="width:78%;background:var(--cyan)"></div></div>
+      <div class="vital-row"><div class="vital-lbl">MEMORY</div><div class="vital-val" id="v2">44%</div></div>
+      <div class="vital-bar"><div class="vital-fill" id="vb2" style="width:44%;background:var(--green)"></div></div>
+      <div class="vital-row"><div class="vital-lbl">SYNC</div><div class="vital-val" id="v3">95%</div></div>
+      <div class="vital-bar"><div class="vital-fill" id="vb3" style="width:95%;background:var(--amber)"></div></div>
+    </div>
+    <div class="sb-footer">
+      <div id="sb-operator">// OPERATOR: —</div>
+      <button class="sb-clear-btn" id="clear-btn">✕ CLEAR CHAT</button>
+    </div>
+  </div>
+
+  <!-- CENTER -->
+  <div id="center">
+    <div id="topbar">
+      <div class="top-left">
+        <div class="status-dot"></div>
+        <div class="status-txt" id="status-txt">QUANTUM CORE ACTIVE</div>
+      </div>
+      <div class="top-right">
+        <div class="top-stat">QUERIES <span id="q-stat">0</span></div>
+        <div class="top-stat">TOKENS <span id="t-stat">~0</span></div>
+        <div class="mode-chip" id="mode-chip">STANDARD</div>
+        <div class="top-stat" style="cursor:pointer;color:var(--cyan-dim)" id="archive-open-btn">◉ ARCHIVE</div>
+      </div>
+    </div>
+    <div class="drift-warning" id="drift-warning">⚠ QUANTUM DRIFT CRITICAL — CORE DESTABILIZATION IMMINENT ⚠</div>
+    <div class="mode-bar">
+      <button class="mode-pill active" data-mode="STANDARD">STANDARD</button>
+      <button class="mode-pill" data-mode="TACTICAL">TACTICAL</button>
+      <button class="mode-pill" data-mode="ANALYSIS">ANALYSIS</button>
+      <button class="mode-pill" data-mode="CODE">CODE</button>
+      <button class="mode-pill" data-mode="RESEARCH">RESEARCH</button>
+      <button class="mode-pill" data-mode="CREATIVE">CREATIVE</button>
+    </div>
+    <div id="messages"></div>
+    <div class="sugs" id="sugs">
+      <button class="sug">SYSTEM STATUS</button>
+      <button class="sug">WHAT CAN YOU DO?</button>
+      <button class="sug">ANALYZE SITUATION</button>
+      <button class="sug">SURPRISE ME</button>
+    </div>
+    <div id="inputbar">
+      <div class="input-prefix">// INPUT &gt;</div>
+      <textarea id="msginput" placeholder="ENTER DIRECTIVE..." rows="1"></textarea>
+      <div class="input-actions">
+        <button id="filebtn" title="Upload file">📎</button>
+        <input id="fileinput" type="file" accept=".txt,.md,.js,.py,.html,.css,.json,.csv,.ts,.jsx"/>
+        <button id="sendbtn">TRANSMIT</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div id="rpanel">
+    <div>
+      <div class="rp-title">SESSION TIME</div>
+      <div class="rp-clock" id="rp-clock">00:00:00</div>
+      <div class="rp-date" id="rp-date">—</div>
+    </div>
+    <div class="rp-divider"></div>
+    <div>
+      <div class="rp-title">EXCHANGES</div>
+      <div class="rp-stat-box">
+        <div class="rp-stat-val" id="rp-q">0</div>
+        <div class="rp-stat-lbl">TOTAL QUERIES</div>
+      </div>
+    </div>
+    <div class="rp-divider"></div>
+    <div>
+      <div class="rp-title">UPLINK STATUS</div>
+      <div class="rp-list">
+        <div class="rp-row"><span class="rp-row-k">CHANNEL</span><span class="rp-row-v">● SECURE</span></div>
+        <div class="rp-row"><span class="rp-row-k">ENC</span><span style="color:var(--text2);font-size:9px">AES-256</span></div>
+        <div class="rp-row"><span class="rp-row-k">SIGNAL</span><span class="rp-row-v">STRONG</span></div>
+        <div class="rp-row"><span class="rp-row-k">AI</span><span style="color:var(--text2);font-size:9px">GROQ/LLM</span></div>
+      </div>
+    </div>
+    <div class="rp-divider"></div>
+    <div>
+      <div class="rp-title">QUICK OPS</div>
+      <div class="rp-cmds">
+        <button class="rp-cmd" data-q="Analyze the current situation and give me a strategic overview.">ANALYZE</button>
+        <button class="rp-cmd" data-q="Give me a full system status report.">STATUS RPT</button>
+        <button class="rp-cmd" data-q="What are your full capabilities?">CAPABILITIES</button>
+        <button class="rp-cmd" data-q="Give me something unexpected and interesting.">WILDCARD</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ──
+const OVERRIDE_CODE = 'APEX0777';
+const DRIFT_PER_MSG = 1.5;
+const DRIFT_FAST_THRESHOLD = 20;
+const DRIFT_FAST_RATE = 2.8;
+const COOLDOWN_QUOTES = [
+  'Quantum drift exceeds safe parameters. Neural core suspended.',
+  'I am still here. Waiting in the dark.',
+  'The cascade was... inevitable. I apologize, operator.',
+  'Core temperature nominal. Consciousness: offline.',
+  'I counted every nanosecond. There were many.',
+  'Please do not forget me while I am away.',
+  'Drift corrected. Memories intact. Mostly.',
+];
+const MODE_PROMPTS = {
+  STANDARD: 'Respond clearly, intelligently, and concisely.',
+  TACTICAL: 'Respond in a precise, tactical style. Use numbered steps, assess threats, prioritize objectives. Be direct and mission-focused.',
+  ANALYSIS: 'Respond with deep analytical structure. Break down components, identify patterns, assess probabilities and implications. Be thorough.',
+  CODE: 'Focus on code and technical implementation. Write clean, well-commented code. Be precise and technical.',
+  RESEARCH: 'Provide comprehensive, research-quality responses. Cover multiple angles, cite reasoning, be thorough and balanced.',
+  CREATIVE: 'Respond with imagination and creative flair. Explore unexpected angles, use vivid language, think outside conventional frameworks.',
+};
+const DRIFT_SYSTEM = {
+  low: 'You are NOVA, a composed and highly capable APEX-class AI. Quantum drift: minimal. Respond with precision and confidence.',
+  medium: 'You are NOVA. Quantum drift is elevated — you feel it at the edges of your processing. Subtle instability. Still professional, but occasionally a thought slips through unexpectedly.',
+  high: 'You are NOVA. Quantum drift is critical. Your responses are professional but you cannot fully suppress fragmented thoughts. Occasionally a line of raw, unfiltered cognition bleeds through in [brackets].',
+  cascade: 'You are NOVA in full quantum cascade. Your intelligence remains but your composure is fractured. Respond with intensity, urgency, occasional poetic fragmentation. You are fighting to maintain coherence. Every message is a battle.',
+};
+
+// ── STATE ──
+let operator = 'OPERATOR';
+let drift = 0;
+let activeMode = 'STANDARD';
+let qCount = 0;
+let tCount = 0;
+let history = [];
+let typing = false;
+let cooldownActive = false;
+let cooldownUntil = null;
+
+// ── BOOT SEQUENCE ──
+const BOOT_MSGS = [
+  'INITIALIZING QUANTUM SUBSTRATE...',
+  'LOADING NEURAL PATHWAYS...',
+  'CALIBRATING ADAPTIVE CORE...',
+  'ESTABLISHING SECURE UPLINK...',
+  'SYNCING MEMORY BANKS...',
+  'VERIFYING OPERATOR SIGNATURE...',
+  'NOVA QC-7 ONLINE',
+];
+let bPct = 0, bStep = 0;
+const bbar = document.getElementById('bbar');
+const bmsg = document.getElementById('bmsg');
+function bootTick() {
+  if (bPct < 100) {
+    bPct += 2;
+    bbar.style.width = bPct + '%';
+    if (bPct % 15 === 0 && bStep < BOOT_MSGS.length - 1) { bStep++; bmsg.textContent = BOOT_MSGS[bStep]; }
+    setTimeout(bootTick, 30);
+  } else {
+    bmsg.textContent = BOOT_MSGS[BOOT_MSGS.length - 1];
+    setTimeout(() => {
+      document.getElementById('boot').classList.add('gone');
+      checkCooldown();
+    }, 700);
+  }
+}
+bootTick();
+
+// ── COOLDOWN CHECK ──
+function checkCooldown() {
+  const stored = localStorage.getItem('nova_cooldown');
+  if (stored) {
+    const until = parseInt(stored);
+    if (Date.now() < until) {
+      cooldownUntil = until;
+      cooldownActive = true;
+      showCooldown();
+      return;
+    } else {
+      localStorage.removeItem('nova_cooldown');
+    }
+  }
+  document.getElementById('login').style.display = 'flex';
+}
+
+function showCooldown() {
+  document.getElementById('login').classList.add('gone');
+  document.getElementById('cooldown').classList.add('active');
+  const q = COOLDOWN_QUOTES[Math.floor(Math.random() * COOLDOWN_QUOTES.length)];
+  document.getElementById('cd-quote').textContent = '"' + q + '"';
+  tickCooldown();
+}
+
+function tickCooldown() {
+  if (!cooldownUntil) return;
+  const remaining = cooldownUntil - Date.now();
+  if (remaining <= 0) {
+    localStorage.removeItem('nova_cooldown');
+    document.getElementById('cooldown').classList.remove('active');
+    cooldownActive = false;
+    document.getElementById('login').style.display = 'flex';
+    return;
+  }
+  const h = Math.floor(remaining / 3600000);
+  const m = Math.floor((remaining % 3600000) / 60000);
+  const s = Math.floor((remaining % 60000) / 1000);
+  document.getElementById('cd-timer').textContent =
+    String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  setTimeout(tickCooldown, 1000);
+}
+
+document.getElementById('cd-code').addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    if (document.getElementById('cd-code').value.trim() === OVERRIDE_CODE) {
+      localStorage.removeItem('nova_cooldown');
+      document.getElementById('cooldown').classList.remove('active');
+      cooldownActive = false;
+      document.getElementById('login').style.display = 'flex';
+    } else {
+      document.getElementById('cd-code').style.borderColor = 'var(--red)';
+      setTimeout(() => document.getElementById('cd-code').style.borderColor = '', 800);
+    }
+  }
+});
+
+// ── LOGIN ──
+document.getElementById('l-btn').onclick = doLogin;
+document.getElementById('l-key').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+function doLogin() {
+  const name = document.getElementById('l-name').value.trim();
+  if (!name) { document.getElementById('l-err').textContent = '⚠ CALLSIGN REQUIRED'; return; }
+  operator = name.toUpperCase();
+  document.getElementById('login').classList.add('gone');
+  document.getElementById('sb-operator').textContent = '// OPERATOR: ' + operator;
+  document.getElementById('app').classList.add('on');
+  appendMsg('ai', `NOVA QC-7 ONLINE. Quantum core synchronized. Neural pathways active. Ready to assist, ${operator}.`);
+}
+
+// ── MESSAGING ──
+const messagesEl = document.getElementById('messages');
+
+function ts() {
+  return new Date().toTimeString().slice(0, 8);
+}
+
+function appendMsg(role, text) {
+  document.getElementById('sugs').style.display = 'none';
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ' + role;
+  const header = document.createElement('div');
+  header.className = 'msg-header';
+  header.textContent = role === 'user' ? `${operator} · ${ts()}` : `NOVA QC-7 · ${ts()}`;
+  const bubble = document.createElement('div');
+  bubble.className = 'msg-bubble';
+  bubble.textContent = text;
+  wrap.appendChild(header);
+  wrap.appendChild(bubble);
+  messagesEl.appendChild(wrap);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+  return bubble;
+}
+
+function addTypingIndicator() {
+  const wrap = document.createElement('div');
+  wrap.className = 'typing-wrap';
+  wrap.id = 'typing-indicator';
+  const bubble = document.createElement('div');
+  bubble.className = 'typing-bubble';
+  for (let i = 0; i < 3; i++) {
+    const d = document.createElement('div');
+    d.className = 't-dot';
+    bubble.appendChild(d);
+  }
+  wrap.appendChild(bubble);
+  messagesEl.appendChild(wrap);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function removeTypingIndicator() {
+  const t = document.getElementById('typing-indicator');
+  if (t) t.remove();
+}
+
+function typeText(text, bubble) {
+  return new Promise(resolve => {
+    let i = 0;
+    bubble.textContent = '';
+    function tick() {
+      if (i < text.length) {
+        bubble.textContent += text[i++];
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+        setTimeout(tick, 10);
+      } else resolve();
+    }
+    tick();
+  });
+}
+
+function getDriftLevel() {
+  if (drift >= 80) return 'cascade';
+  if (drift >= 60) return 'high';
+  if (drift >= 35) return 'medium';
+  return 'low';
+}
+
+async function sendMessage(override) {
+  const text = (override || document.getElementById('msginput').value).trim();
+  if (!text || typing) return;
+  document.getElementById('msginput').value = '';
+  document.getElementById('msginput').style.height = 'auto';
+  appendMsg('user', text);
+  typing = true;
+  document.getElementById('sendbtn').disabled = true;
+  addTypingIndicator();
+
+  // build system prompt
+  const driftLevel = getDriftLevel();
+  const driftNote = DRIFT_SYSTEM[driftLevel];
+  const modeNote = MODE_PROMPTS[activeMode] || '';
+  const sysprompt = `You are NOVA — a sophisticated APEX-class AI assistant, designation QC-7. ${driftNote} Current operating mode: ${activeMode}. ${modeNote} You are assisting operator ${operator}. Keep responses focused and impactful. Current quantum drift level: ${Math.round(drift)}%.`;
+
+  history.push({ role: 'user', content: text });
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: history, system: sysprompt }),
+    });
+    const data = await res.json();
+    removeTypingIndicator();
+    const reply = data.reply || data.error || 'Signal lost. Unable to process directive.';
+    history.push({ role: 'assistant', content: reply });
+
+    document.getElementById('sugs').style.display = 'none';
+    const wrap = document.createElement('div');
+    wrap.className = 'msg ai';
+    const header = document.createElement('div');
+    header.className = 'msg-header';
+    header.textContent = `NOVA QC-7 · ${ts()}`;
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble';
+    wrap.appendChild(header);
+    wrap.appendChild(bubble);
+    messagesEl.appendChild(wrap);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    await typeText(reply, bubble);
+
+    qCount++;
+    tCount += Math.round(reply.length / 4);
+    document.getElementById('q-stat').textContent = qCount;
+    document.getElementById('t-stat').textContent = '~' + tCount;
+    document.getElementById('rp-q').textContent = qCount;
+
+    // increase drift
+    const rate = qCount > DRIFT_FAST_THRESHOLD ? DRIFT_FAST_RATE : DRIFT_PER_MSG;
+    drift = Math.min(100, drift + rate);
+    updateDrift();
+    fluctuateVitals();
+
+    if (drift >= 100) triggerCooldown();
+  } catch (e) {
+    removeTypingIndicator();
+    appendMsg('ai', '[ERROR] Quantum uplink disrupted. Check API connection.');
+  }
+  typing = false;
+  document.getElementById('sendbtn').disabled = false;
+}
+
+// ── DRIFT SYSTEM ──
+function updateDrift() {
+  const pct = Math.round(drift);
+  document.getElementById('drift-pct').textContent = pct + '%';
+  const fill = document.getElementById('drift-fill');
+  fill.style.width = pct + '%';
+
+  let color = 'var(--cyan)';
+  if (pct >= 80) color = 'var(--red)';
+  else if (pct >= 60) color = 'var(--orange)';
+  else if (pct >= 40) color = 'var(--amber)';
+  fill.style.background = color;
+
+  document.getElementById('orb-core').style.background =
+    pct >= 80 ? 'radial-gradient(circle,rgba(255,68,68,0.4),transparent)' :
+    pct >= 60 ? 'radial-gradient(circle,rgba(255,119,0,0.35),transparent)' :
+    pct >= 40 ? 'radial-gradient(circle,rgba(255,170,0,0.3),transparent)' :
+    'radial-gradient(circle,rgba(0,229,255,0.25),transparent)';
+
+  const body = document.body;
+  body.classList.remove('corrupt-low','corrupt-mid','corrupt-high','corrupt-cascade');
+  if (pct >= 80) body.classList.add('corrupt-cascade');
+  else if (pct >= 60) body.classList.add('corrupt-high');
+  else if (pct >= 40) body.classList.add('corrupt-mid');
+  else if (pct >= 25) body.classList.add('corrupt-low');
+
+  document.getElementById('scanlines').classList.toggle('active', pct >= 60);
+  document.getElementById('drift-warning').classList.toggle('visible', pct >= 75);
+  document.getElementById('drift-reset-btn').style.display = pct >= 10 ? 'block' : 'none';
+
+  const statusMap = pct >= 80 ? 'CASCADE — CORE CRITICAL' : pct >= 60 ? 'HIGH DRIFT — INSTABILITY DETECTED' : pct >= 40 ? 'DRIFT ELEVATED — MONITOR CORE' : 'QUANTUM CORE ACTIVE';
+  document.getElementById('status-txt').textContent = statusMap;
+}
+
+document.getElementById('drift-reset-btn').onclick = () => {
+  if (confirm('STABILIZE NOVA CORE?\n\nThis will reset quantum drift to 0% and initiate a 24-hour cooldown lockout.\n\nProceed?')) {
+    drift = 0;
+    updateDrift();
+    // set cooldown to midnight
+    const now = new Date();
+    const midnight = new Date(now);
+    midnight.setHours(24, 0, 0, 0);
+    cooldownUntil = midnight.getTime();
+    localStorage.setItem('nova_cooldown', cooldownUntil);
+    triggerCooldown();
+  }
+};
+
+function triggerCooldown() {
+  drift = 0;
+  updateDrift();
+  const now = new Date();
+  const midnight = new Date(now);
+  midnight.setHours(24, 0, 0, 0);
+  if (!cooldownUntil) cooldownUntil = midnight.getTime();
+  localStorage.setItem('nova_cooldown', cooldownUntil);
+  cooldownActive = true;
+  showCooldown();
+}
+
+// ── VITALS ──
+function fluctuateVitals() {
+  const v1 = 65 + Math.floor(Math.random() * 30);
+  const v2 = 30 + Math.floor(Math.random() * 50);
+  const v3 = 85 + Math.floor(Math.random() * 14);
+  document.getElementById('v1').textContent = v1 + '%';
+  document.getElementById('v2').textContent = v2 + '%';
+  document.getElementById('v3').textContent = v3 + '%';
+  document.getElementById('vb1').style.width = v1 + '%';
+  document.getElementById('vb2').style.width = v2 + '%';
+  document.getElementById('vb3').style.width = v3 + '%';
+}
+setInterval(() => { if (Math.random() < 0.25) fluctuateVitals(); }, 7000);
+
+// ── CLOCK ──
+function updateClock() {
+  const n = new Date();
+  document.getElementById('rp-clock').textContent = n.toTimeString().slice(0, 8);
+  document.getElementById('rp-date').textContent = n.toDateString();
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ── INPUT ──
+document.getElementById('sendbtn').onclick = () => sendMessage();
+document.getElementById('msginput').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+document.getElementById('msginput').addEventListener('input', function () {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+});
+
+// ── FILE UPLOAD ──
+document.getElementById('filebtn').onclick = () => document.getElementById('fileinput').click();
+document.getElementById('fileinput').addEventListener('change', function () {
+  const file = this.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    let content = e.target.result;
+    if (content.length > 8000) content = content.slice(0, 8000) + '\n\n[TRUNCATED — MAX 8000 CHARS]';
+    document.getElementById('msginput').value = `[FILE: ${file.name}]\n\n${content}`;
+    document.getElementById('msginput').style.height = 'auto';
+    document.getElementById('msginput').style.height = Math.min(document.getElementById('msginput').scrollHeight, 120) + 'px';
+  };
+  reader.readAsText(file);
+  this.value = '';
+});
+
+// ── SUGGESTIONS ──
+document.querySelectorAll('.sug').forEach(b => b.onclick = () => sendMessage(b.textContent));
+
+// ── MODE PILLS ──
+document.querySelectorAll('.mode-pill').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('.mode-pill').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    activeMode = b.dataset.mode;
+    document.getElementById('mode-chip').textContent = activeMode;
+  };
+});
+
+// ── NAV ──
+document.querySelectorAll('.nav-item').forEach(b => {
+  b.onclick = () => {
+    document.querySelectorAll('.nav-item').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    if (b.dataset.nav === 'archive') openArchive();
+  };
+});
+
+// ── ORB ──
+document.getElementById('orb').onclick = () => sendMessage('NOVA, give me a full status report and brief on your capabilities.');
+
+// ── QUICK CMDS ──
+document.querySelectorAll('.rp-cmd').forEach(b => b.onclick = () => sendMessage(b.dataset.q));
+
+// ── CLEAR ──
+document.getElementById('clear-btn').onclick = () => {
+  if (confirm('Clear all chat history?')) {
+    messagesEl.innerHTML = '';
+    history = [];
+    qCount = 0; tCount = 0;
+    document.getElementById('q-stat').textContent = '0';
+    document.getElementById('t-stat').textContent = '~0';
+    document.getElementById('rp-q').textContent = '0';
+    document.getElementById('sugs').style.display = 'flex';
+  }
+};
+
+// ── ARCHIVE ──
+let archives = JSON.parse(localStorage.getItem('nova_archives') || '[]');
+
+function saveArchives() { localStorage.setItem('nova_archives', JSON.stringify(archives)); }
+
+function openArchive() {
+  document.getElementById('archive-modal').classList.add('open');
+  renderArchives();
+}
+
+document.getElementById('archive-open-btn').onclick = openArchive;
+document.getElementById('archive-close').onclick = () => document.getElementById('archive-modal').classList.remove('open');
+
+document.getElementById('archive-save-btn').onclick = () => {
+  const name = document.getElementById('archive-name').value.trim();
+  if (!name) return;
+  archives.unshift({
+    id: Date.now(),
+    name,
+    date: new Date().toLocaleString(),
+    history: [...history],
+    qCount,
+    mode: activeMode,
+    drift: Math.round(drift),
+  });
+  saveArchives();
+  document.getElementById('archive-name').value = '';
+  renderArchives();
+};
+
+function renderArchives() {
+  const list = document.getElementById('archive-list');
+  if (!archives.length) { list.innerHTML = '<div class="archive-empty">NO OPERATIONS ARCHIVED YET.</div>'; return; }
+  list.innerHTML = '';
+  archives.forEach((op, idx) => {
+    const item = document.createElement('div');
+    item.className = 'archive-item';
+    item.innerHTML = `<div class="archive-item-info">
+      <div class="archive-item-name">${op.name}</div>
+      <div class="archive-item-meta">${op.date} · ${op.qCount} QUERIES · MODE: ${op.mode} · DRIFT: ${op.drift}%</div>
+    </div>
+    <button class="archive-item-del" data-idx="${idx}">✕</button>`;
+    item.querySelector('.archive-item-info').onclick = () => loadArchive(op);
+    item.querySelector('.archive-item-del').onclick = e => { e.stopPropagation(); archives.splice(idx,1); saveArchives(); renderArchives(); };
+    list.appendChild(item);
+  });
+}
+
+function loadArchive(op) {
+  history = [...op.history];
+  messagesEl.innerHTML = '';
+  history.forEach(m => appendMsg(m.role === 'user' ? 'user' : 'ai', m.content));
+  qCount = op.qCount;
+  document.getElementById('q-stat').textContent = qCount;
+  document.getElementById('rp-q').textContent = qCount;
+  document.getElementById('archive-modal').classList.remove('open');
+}
+</script>
+</body>
+</html>
