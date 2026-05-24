@@ -3,8 +3,14 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="mobile-web-app-capable" content="yes"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="NOVA"/>
 <meta name="theme-color" content="#00e5ff"/>
+<meta name="description" content="NOVA QC-7 — APEX Intelligence AI System"/>
+<link rel="manifest" href="/manifest.json"/>
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' fill='%23030d10'/><circle cx='256' cy='256' r='180' fill='none' stroke='%2300e5ff' stroke-width='16'/><circle cx='256' cy='256' r='80' fill='%2300e5ff' opacity='0.5'/><circle cx='256' cy='256' r='40' fill='%2300e5ff' opacity='0.8'/></svg>"/>
 <title>N O V A — APEX AI</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='none' stroke='%2300e5ff' stroke-width='6'/><circle cx='50' cy='50' r='20' fill='%2300e5ff' opacity='0.6'/></svg>"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -700,6 +706,11 @@ let history = [];
 let typing = false;
 let cooldownActive = false;
 let cooldownUntil = null;
+
+// ── SERVICE WORKER ──
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
 
 // ── LOGIN COUNTDOWN ──
 (function(){
