@@ -22,9 +22,15 @@ export default async function handler(req, res) {
     AGENT:     ['STANDARD', 'TACTICAL', 'ANALYSIS', 'CODE', 'RESEARCH', 'CREATIVE'],
     COMMANDER: ['STANDARD', 'TACTICAL', 'ANALYSIS', 'CODE', 'RESEARCH', 'CREATIVE'],
   };
-  const archiveMap  = { TRIAL: 0, RECRUIT: 5, AGENT: 999, COMMANDER: 999 };
-  const queryLimit  = { TRIAL: 10, RECRUIT: 999, AGENT: 999, COMMANDER: 999 };
-  const levelMap    = { TRIAL: 0, RECRUIT: 1, AGENT: 2, COMMANDER: 3 };
+  const archiveMap = { TRIAL: 0,  RECRUIT: 5,   AGENT: 999, COMMANDER: 999 };
+  const queryLimit = { TRIAL: 10, RECRUIT: 999, AGENT: 999, COMMANDER: 999 };
+  const levelMap   = { TRIAL: 0,  RECRUIT: 1,   AGENT: 2,   COMMANDER: 3   };
+  const expiryDays = { TRIAL: 7,  RECRUIT: null, AGENT: null, COMMANDER: null };
+
+  const now = new Date();
+  const expiry = expiryDays[tier]
+    ? new Date(now.getTime() + expiryDays[tier] * 86400000).toISOString()
+    : null;
 
   const value = JSON.stringify({
     tier,
@@ -34,7 +40,8 @@ export default async function handler(req, res) {
     queryLimit: queryLimit[tier],
     email: email.toLowerCase(),
     name: name.trim(),
-    createdAt: new Date().toISOString(),
+    createdAt: now.toISOString(),
+    expiresAt: expiry,
   });
 
   const upstashUrl   = process.env.UPSTASH_REDIS_REST_URL;
@@ -45,5 +52,5 @@ export default async function handler(req, res) {
   });
 
   if (!r.ok) return res.status(500).json({ error: 'Failed to store key' });
-  return res.status(200).json({ key });
+  return res.status(200).json({ key, expiresAt: expiry });
 }
