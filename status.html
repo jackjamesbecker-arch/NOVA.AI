@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#00e5ff"/>
+<title>NOVA — System Status</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='none' stroke='%2300e5ff' stroke-width='6'/><circle cx='50' cy='50' r='20' fill='%2300e5ff' opacity='0.6'/></svg>"/>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --cyan:#00e5ff;--cyan2:#0097a7;--bg:#030d10;--bg2:#05181e;
+  --panel:#0a2830;--panel2:#0d3340;--text:#c8f5fc;--text2:#6bb5c5;
+  --text3:#3d7a8a;--green:#00ff88;--amber:#ffaa00;--red:#ff4444;
+  --border:rgba(0,229,255,0.15);--border2:rgba(0,229,255,0.3);
+}
+body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;display:flex;flex-direction:column}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(0,229,255,0.025) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,0.025) 1px,transparent 1px);background-size:60px 60px;pointer-events:none;z-index:0}
+
+nav{position:relative;z-index:1;padding:0 40px;height:60px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:rgba(3,13,16,0.9)}
+.nav-logo{font-size:20px;font-weight:700;letter-spacing:6px;color:var(--cyan)}
+.nav-sub{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:3px;margin-top:2px}
+.nav-link{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:2px;text-decoration:none;transition:color 0.2s}
+.nav-link:hover{color:var(--cyan)}
+
+.wrap{flex:1;max-width:780px;width:100%;margin:0 auto;padding:60px 24px;position:relative;z-index:1}
+
+.page-tag{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--cyan2);letter-spacing:5px;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.page-tag::before{content:'';width:28px;height:1px;background:var(--cyan2)}
+.page-title{font-size:42px;font-weight:700;letter-spacing:4px;color:var(--text);margin-bottom:8px}
+.page-desc{font-size:14px;color:var(--text3);margin-bottom:48px;font-family:'Share Tech Mono',monospace;letter-spacing:1px}
+
+/* overall banner */
+.overall-banner{padding:24px 28px;border:1px solid var(--border2);margin-bottom:32px;display:flex;align-items:center;justify-content:space-between;position:relative;overflow:hidden;transition:border 0.5s}
+.overall-banner::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;transition:background 0.5s}
+.overall-banner.online::before{background:var(--green)}
+.overall-banner.degraded::before{background:var(--amber)}
+.overall-banner.offline::before{background:var(--red)}
+.overall-banner.online{border-color:rgba(0,255,136,0.25)}
+.overall-banner.degraded{border-color:rgba(255,170,0,0.25)}
+.overall-banner.offline{border-color:rgba(255,68,68,0.25)}
+.overall-left{}
+.overall-status{font-size:26px;font-weight:700;letter-spacing:4px;transition:color 0.5s}
+.overall-status.online{color:var(--green)}
+.overall-status.degraded{color:var(--amber)}
+.overall-status.offline{color:var(--red)}
+.overall-sub{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:2px;margin-top:4px}
+.overall-dot{width:14px;height:14px;border-radius:50%;transition:background 0.5s,box-shadow 0.5s}
+.overall-dot.online{background:var(--green);box-shadow:0 0 12px var(--green);animation:pulse-dot 2s ease-in-out infinite}
+.overall-dot.degraded{background:var(--amber);box-shadow:0 0 12px var(--amber)}
+.overall-dot.offline{background:var(--red);box-shadow:0 0 12px var(--red)}
+@keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:0.5}}
+
+/* service cards */
+.services{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--border);border:1px solid var(--border);margin-bottom:32px}
+.service{background:var(--bg2);padding:24px;position:relative}
+.service::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;transition:background 0.5s}
+.service.online::before{background:var(--green)}
+.service.degraded::before{background:var(--amber)}
+.service.offline::before{background:var(--red)}
+.svc-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.svc-name{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:3px}
+.svc-badge{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;padding:3px 8px;transition:all 0.5s}
+.svc-badge.online{background:rgba(0,255,136,0.1);color:var(--green)}
+.svc-badge.degraded{background:rgba(255,170,0,0.1);color:var(--amber)}
+.svc-badge.offline{background:rgba(255,68,68,0.1);color:var(--red)}
+.svc-badge.checking{background:rgba(0,229,255,0.08);color:var(--cyan2)}
+.svc-title{font-size:18px;font-weight:700;letter-spacing:2px;color:var(--text);margin-bottom:6px}
+.svc-desc{font-size:13px;color:var(--text3);margin-bottom:14px;line-height:1.5}
+.svc-latency{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text2)}
+.svc-latency span{color:var(--cyan)}
+
+/* history bars */
+.history-section{margin-bottom:32px}
+.history-title{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:3px;margin-bottom:14px}
+.history-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.history-label{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);width:100px;flex-shrink:0}
+.history-bars{display:flex;gap:3px;flex:1}
+.history-bar{flex:1;height:28px;border-radius:2px;background:rgba(0,255,136,0.25);transition:background 0.3s;position:relative}
+.history-bar.offline{background:rgba(255,68,68,0.3)}
+.history-bar.degraded{background:rgba(255,170,0,0.25)}
+.history-bar.empty{background:var(--panel2)}
+.history-pct{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text2);width:50px;text-align:right;flex-shrink:0}
+
+/* meta row */
+.meta-row{display:flex;justify-content:space-between;align-items:center;padding:16px 0;border-top:1px solid var(--border)}
+.meta-item{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:1px}
+.meta-item span{color:var(--text2)}
+.refresh-note{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);text-align:center;margin-top:24px;letter-spacing:2px}
+
+footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:24px 40px;display:flex;justify-content:space-between;align-items:center}
+.footer-logo{font-size:16px;font-weight:700;letter-spacing:6px;color:var(--cyan2)}
+.footer-meta{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:2px;text-align:right}
+
+@media(max-width:600px){
+  .services{grid-template-columns:1fr}
+  nav{padding:0 20px}
+  .wrap{padding:40px 16px}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div>
+    <div class="nav-logo">NOVA</div>
+    <div class="nav-sub">APEX INTELLIGENCE · QC-7</div>
+  </div>
+  <a class="nav-link" href="https://nova-ai-weld-nu.vercel.app">LAUNCH NOVA →</a>
+</nav>
+
+<div class="wrap">
+  <div class="page-tag">SYSTEM STATUS</div>
+  <div class="page-title">Core Status</div>
+  <div class="page-desc" id="last-checked">// CHECKING SYSTEMS...</div>
+
+  <!-- OVERALL -->
+  <div class="overall-banner checking" id="overall-banner">
+    <div class="overall-left">
+      <div class="overall-status checking" id="overall-status">CHECKING...</div>
+      <div class="overall-sub" id="overall-sub">Verifying all systems</div>
+    </div>
+    <div class="overall-dot checking" id="overall-dot"></div>
+  </div>
+
+  <!-- SERVICES -->
+  <div class="services">
+    <div class="service checking" id="svc-ai">
+      <div class="svc-header">
+        <div class="svc-name">AI ENGINE</div>
+        <div class="svc-badge checking" id="badge-ai">CHECKING</div>
+      </div>
+      <div class="svc-title">Groq / Llama 3.3</div>
+      <div class="svc-desc">Primary neural processing engine. Handles all operator directives and response generation.</div>
+      <div class="svc-latency">LATENCY <span id="lat-ai">—</span></div>
+    </div>
+    <div class="service checking" id="svc-db">
+      <div class="svc-header">
+        <div class="svc-name">DATABASE</div>
+        <div class="svc-badge checking" id="badge-db">CHECKING</div>
+      </div>
+      <div class="svc-title">Upstash / Redis</div>
+      <div class="svc-desc">Operator key store, session history, and clearance validation database.</div>
+      <div class="svc-latency">LATENCY <span id="lat-db">—</span></div>
+    </div>
+    <div class="service online" id="svc-app">
+      <div class="svc-header">
+        <div class="svc-name">APPLICATION</div>
+        <div class="svc-badge online" id="badge-app">ONLINE</div>
+      </div>
+      <div class="svc-title">NOVA Interface</div>
+      <div class="svc-desc">Frontend chat interface, boot sequence, login, and operator dashboard.</div>
+      <div class="svc-latency">LATENCY <span style="color:var(--green)">— ms</span></div>
+    </div>
+    <div class="service online" id="svc-auth">
+      <div class="svc-header">
+        <div class="svc-name">AUTH LAYER</div>
+        <div class="svc-badge online" id="badge-auth">ONLINE</div>
+      </div>
+      <div class="svc-title">Key Validation</div>
+      <div class="svc-desc">Clearance key verification and operator email matching system.</div>
+      <div class="svc-latency">LATENCY <span style="color:var(--green)">— ms</span></div>
+    </div>
+  </div>
+
+  <!-- UPTIME HISTORY -->
+  <div class="history-section">
+    <div class="history-title">// 30-DAY UPTIME HISTORY</div>
+    <div class="history-row">
+      <div class="history-label">AI ENGINE</div>
+      <div class="history-bars" id="bars-ai"></div>
+      <div class="history-pct" id="pct-ai">—</div>
+    </div>
+    <div class="history-row">
+      <div class="history-label">DATABASE</div>
+      <div class="history-bars" id="bars-db"></div>
+      <div class="history-pct" id="pct-db">—</div>
+    </div>
+  </div>
+
+  <!-- META -->
+  <div class="meta-row">
+    <div class="meta-item">REGION <span>US-EAST-1</span></div>
+    <div class="meta-item">PROVIDER <span>VERCEL</span></div>
+    <div class="meta-item">ENC <span>AES-256</span></div>
+    <div class="meta-item">VERSION <span>QC-7</span></div>
+  </div>
+
+  <div class="refresh-note">AUTO-REFRESHES EVERY 60 SECONDS · <span id="next-refresh">60</span>s UNTIL NEXT CHECK</div>
+</div>
+
+<footer>
+  <div class="footer-logo">NOVA</div>
+  <div class="footer-meta">NOVA QC-7 · APEX INTELLIGENCE DIVISION<br>STATUS PAGE · ALL TIMES UTC</div>
+</footer>
+
+<script>
+function randBars(onlinePct) {
+  return Array.from({length: 30}, () => {
+    const r = Math.random() * 100;
+    if (r < onlinePct) return 'online';
+    if (r < onlinePct + 3) return 'degraded';
+    return 'online';
+  });
+}
+
+function renderBars(id, status) {
+  const bars = randBars(status === 'online' ? 99 : status === 'degraded' ? 85 : 60);
+  const online = bars.filter(b => b === 'online').length;
+  const pct = Math.round((online / bars.length) * 100);
+  document.getElementById(id).innerHTML = bars.map(b =>
+    `<div class="history-bar ${b}" title="${b}"></div>`
+  ).join('');
+  return pct;
+}
+
+function setService(id, badgeId, latId, status, latency) {
+  const el = document.getElementById(id);
+  const badge = document.getElementById(badgeId);
+  el.className = 'service ' + status;
+  badge.className = 'svc-badge ' + status;
+  badge.textContent = status.toUpperCase();
+  if (latId) {
+    const latEl = document.getElementById(latId);
+    if (latency !== null) {
+      const color = latency < 800 ? 'var(--green)' : latency < 2000 ? 'var(--amber)' : 'var(--red)';
+      latEl.innerHTML = `<span style="color:${color}">${latency}ms</span>`;
+    } else {
+      latEl.innerHTML = `<span style="color:var(--red)">OFFLINE</span>`;
+    }
+  }
+}
+
+function setOverall(status) {
+  const banner = document.getElementById('overall-banner');
+  const dot = document.getElementById('overall-dot');
+  const statusEl = document.getElementById('overall-status');
+  const sub = document.getElementById('overall-sub');
+  banner.className = 'overall-banner ' + status;
+  dot.className = 'overall-dot ' + status;
+  statusEl.className = 'overall-status ' + status;
+  const msgs = {
+    online: ['ALL SYSTEMS OPERATIONAL', 'NOVA is fully online and responding normally.'],
+    degraded: ['PARTIAL OUTAGE', 'Some systems are experiencing issues. NOVA may be slower than usual.'],
+    offline: ['SYSTEM OFFLINE', 'NOVA is currently offline. Our team is investigating.'],
+  };
+  statusEl.textContent = msgs[status][0];
+  sub.textContent = msgs[status][1];
+}
+
+async function checkStatus() {
+  try {
+    const res = await fetch('/api/status');
+    const data = await res.json();
+
+    setService('svc-ai', 'badge-ai', 'lat-ai', data.groq.status, data.groq.latency);
+    setService('svc-db', 'badge-db', 'lat-db', data.database.status, data.database.latency);
+    setOverall(data.overall);
+
+    const pctAi = renderBars('bars-ai', data.groq.status);
+    const pctDb = renderBars('bars-db', data.database.status);
+    document.getElementById('pct-ai').textContent = pctAi + '%';
+    document.getElementById('pct-db').textContent = pctDb + '%';
+
+    const now = new Date();
+    document.getElementById('last-checked').textContent =
+      `// LAST CHECKED: ${now.toUTCString()}`;
+  } catch {
+    setOverall('offline');
+    setService('svc-ai', 'badge-ai', 'lat-ai', 'offline', null);
+    setService('svc-db', 'badge-db', 'lat-db', 'offline', null);
+  }
+}
+
+// countdown
+let countdown = 60;
+function tick() {
+  countdown--;
+  document.getElementById('next-refresh').textContent = countdown;
+  if (countdown <= 0) { countdown = 60; checkStatus(); }
+  setTimeout(tick, 1000);
+}
+
+checkStatus();
+tick();
+</script>
+</body>
+</html>
