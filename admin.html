@@ -98,6 +98,10 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
       <input type="email" id="op-email" placeholder="operator@email.com"/>
     </div>
     <div class="field">
+      <div class="field-label">OPERATOR NAME / CALLSIGN</div>
+      <input type="text" id="op-name" placeholder="e.g. Jack or GHOST-7" maxlength="32"/>
+    </div>
+    <div class="field">
       <div class="field-label">CLEARANCE TIER</div>
       <select id="op-tier">
         <option value="RECRUIT">RECRUIT — Standard + Tactical</option>
@@ -152,12 +156,14 @@ async function authenticate() {
 // ── GENERATE ──
 document.getElementById('gen-btn').onclick = async () => {
   const email = document.getElementById('op-email').value.trim();
+  const name  = document.getElementById('op-name').value.trim();
   const tier  = document.getElementById('op-tier').value;
   const btn   = document.getElementById('gen-btn');
   const resultBox = document.getElementById('result-box');
   const errBox    = document.getElementById('err-box');
 
   if (!email) { document.getElementById('op-email').focus(); return; }
+  if (!name)  { document.getElementById('op-name').focus(); return; }
 
   btn.textContent = 'GENERATING...';
   btn.disabled = true;
@@ -168,18 +174,17 @@ document.getElementById('gen-btn').onclick = async () => {
     const res = await fetch('/api/generate-key', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tier, email, adminSecret })
+      body: JSON.stringify({ tier, email, name, adminSecret })
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
 
     const key = data.key;
     document.getElementById('result-key').textContent = key;
-    document.getElementById('result-tier').textContent = tier + ' · ' + email;
+    document.getElementById('result-tier').textContent = tier + ' · ' + name + ' · ' + email;
     resultBox.style.display = 'block';
 
-    // add to session log
-    sessionLog.unshift({ key, tier, email, time: new Date().toLocaleTimeString() });
+    sessionLog.unshift({ key, tier, email, name, time: new Date().toLocaleTimeString() });
     renderLog();
   } catch (e) {
     errBox.textContent = '⚠ ' + (e.message || 'Error generating key');
@@ -207,7 +212,7 @@ function renderLog() {
     <div class="log-item">
       <div>
         <div class="log-key">${e.key}</div>
-        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);margin-top:3px">${e.email}</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);margin-top:3px">${e.name} · ${e.email}</div>
       </div>
       <div style="text-align:right">
         <div class="log-tier-badge ${e.tier}">${e.tier}</div>
