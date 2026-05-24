@@ -1,9 +1,5 @@
 {
   "name": "nova-ai",
   "version": "1.0.0",
-  "type": "module",
-  "description": "NOVA — APEX Intelligence AI Interface",
-  "dependencies": {
-    "groq-sdk": "^0.9.0"
-  }
+  "type": "module"
 }
