@@ -451,6 +451,7 @@ const DRIFT_SYSTEM = {
 // ── STATE ──
 let operator = 'OPERATOR';
 let clearance = null;
+let currentKey = '';
 let drift = 0;
 let activeMode = 'STANDARD';
 let qCount = 0;
@@ -569,6 +570,8 @@ function doLogin() {
       document.getElementById('l-btn').disabled = false;
       return;
     }
+    currentKey = key;
+
     const match = data.clearance;
     const displayName = match.name ? match.name.toUpperCase() : email;
     operator  = displayName;
@@ -578,7 +581,16 @@ function doLogin() {
     document.getElementById('login').classList.remove('visible');
     document.getElementById('sb-operator').textContent = '// OPERATOR: ' + displayName;
     document.getElementById('app').classList.add('on');
-    appendMsg('ai', `NOVA QC-7 ONLINE. Clearance verified — ${match.tier} access granted. Neural pathways active. Welcome, ${displayName}.`);
+    // load previous conversation history
+    loadHistory(key).then(savedHistory => {
+      if (savedHistory.length) {
+        history = savedHistory;
+        savedHistory.forEach(m => appendMsg(m.role === 'user' ? 'user' : 'ai', m.content));
+        appendMsg('ai', `Neural link re-established. Welcome back, ${displayName}. I remember our previous session.`);
+      } else {
+        appendMsg('ai', `NOVA QC-7 ONLINE. Clearance verified — ${match.tier} access granted. Neural pathways active. Welcome, ${displayName}.`);
+      }
+    });
   })
   .catch(() => {
     err.textContent = '⚠ UPLINK ERROR — TRY AGAIN';
@@ -609,6 +621,28 @@ function applyTier(c) {
   activeMode = c.modes[0];
   document.querySelectorAll('.mode-pill').forEach(p => p.classList.toggle('active', p.dataset.mode === activeMode));
   document.getElementById('mode-chip').textContent = activeMode;
+}
+
+// ── OPERATOR HISTORY ──
+async function loadHistory(key) {
+  try {
+    const res = await fetch('/api/load-history', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key })
+    });
+    const data = await res.json();
+    return data.history || [];
+  } catch { return []; }
+}
+
+async function saveHistory() {
+  if (!currentKey || !history.length) return;
+  try {
+    await fetch('/api/save-history', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: currentKey, history })
+    });
+  } catch {}
 }
 
 // ── MESSAGING ──
@@ -735,6 +769,7 @@ async function sendMessage(override) {
     fluctuateVitals();
 
     if (drift >= 100) triggerCooldown();
+    saveHistory();
   } catch (e) {
     removeTypingIndicator();
     appendMsg('ai', '[ERROR] Quantum uplink disrupted. Check API connection.');
