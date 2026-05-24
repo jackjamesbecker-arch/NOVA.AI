@@ -686,6 +686,30 @@ let cooldownUntil = null;
     setTimeout(tick, 1000);
   }
   tick();
+
+  // glitch effect on login countdown
+  const LC_IDS = ['lc-days','lc-hours','lc-mins','lc-secs'];
+  const GC = '▓▒░█▄▀■□';
+  function glitchLogin() {
+    if (Math.random() < 0.6) {
+      const el = document.getElementById(LC_IDS[Math.floor(Math.random() * LC_IDS.length)]);
+      if (!el) return;
+      const orig = el.textContent;
+      const idx = Math.floor(Math.random() * orig.length);
+      el.textContent = orig.slice(0,idx) + GC[Math.floor(Math.random()*GC.length)] + orig.slice(idx+1);
+      el.style.color = Math.random() < 0.3 ? '#ff4444' : '';
+      setTimeout(() => { el.textContent = orig; el.style.color = ''; }, 70 + Math.random() * 110);
+    }
+    if (Math.random() < 0.08) {
+      const wrap = document.getElementById('lc-display');
+      if (wrap) {
+        wrap.style.transform = `translateX(${(Math.random()-0.5)*4}px)`;
+        setTimeout(() => wrap.style.transform = '', 90);
+      }
+    }
+    setTimeout(glitchLogin, 400 + Math.random() * 2000);
+  }
+  setTimeout(glitchLogin, 2000);
 })();
 
 // ── BOOT SEQUENCE ──
