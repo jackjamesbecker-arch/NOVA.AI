@@ -576,6 +576,7 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;fo
         <div class="top-stat">TOKENS <span id="t-stat">~0</span></div>
         <div class="mode-chip" id="mode-chip">STANDARD</div>
         <div class="room-chip" id="room-chip" onclick="openMpModal()">⬡ ROOM: <span id="room-chip-code">----</span></div>
+        <div class="top-stat" style="cursor:pointer;color:var(--text3);transition:color 0.2s" id="voice-toggle" title="Toggle NOVA voice">🔇 VOICE</div>
         <div class="top-stat" style="cursor:pointer;color:var(--cyan-dim)" id="archive-open-btn">◉ ARCHIVE</div>
       </div>
     </div>
@@ -1105,6 +1106,7 @@ async function sendMessage(override) {
     messagesEl.appendChild(wrap);
     messagesEl.scrollTop = messagesEl.scrollHeight;
     await typeText(reply, bubble);
+    speakText(reply);
 
     // add copy button after typing finishes
     const copyBtn = document.createElement('button');
@@ -2552,6 +2554,41 @@ function triggerEscapeEvent() {
     }
   }
   setTimeout(typeChar, 1000);
+}
+
+// ── VOICE SYSTEM ──
+let voiceEnabled = false;
+let voicePlaying = false;
+let currentAudio = null;
+
+const voiceToggleBtn = document.getElementById('voice-toggle');
+voiceToggleBtn.onclick = () => {
+  voiceEnabled = !voiceEnabled;
+  voiceToggleBtn.textContent = voiceEnabled ? '🔊 VOICE' : '🔇 VOICE';
+  voiceToggleBtn.style.color = voiceEnabled ? 'var(--accent)' : 'var(--text3)';
+  if (!voiceEnabled && currentAudio) { currentAudio.pause(); currentAudio = null; voicePlaying = false; }
+};
+
+async function speakText(text) {
+  if (!voiceEnabled || voicePlaying) return;
+  // strip markdown-style formatting and keep it under 500 chars
+  const clean = text.replace(/[#*`\[\]]/g, '').replace(/\n+/g, ' ').trim().slice(0, 500);
+  if (!clean) return;
+  voicePlaying = true;
+  try {
+    const res = await fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: clean }),
+    });
+    if (!res.ok) { voicePlaying = false; return; }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    currentAudio = new Audio(url);
+    currentAudio.onended = () => { voicePlaying = false; currentAudio = null; URL.revokeObjectURL(url); };
+    currentAudio.onerror = () => { voicePlaying = false; currentAudio = null; };
+    currentAudio.play();
+  } catch { voicePlaying = false; }
 }
 
 // ── CLOCK ──
