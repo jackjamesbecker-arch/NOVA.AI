@@ -276,6 +276,27 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;fo
 .theme-swatch.active{border-color:var(--text);transform:scale(1.15)}
 .theme-swatch.locked{opacity:0.25;cursor:not-allowed;filter:grayscale(0.5)}
 
+/* ── MISSION SYSTEM ── */
+.mission-item{border:1px solid var(--border);padding:12px 14px;margin-bottom:8px;position:relative;overflow:hidden;transition:border 0.2s}
+.mission-item.complete{border-color:rgba(0,255,136,0.3);opacity:0.6}
+.mission-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--accent)}
+.mission-item.complete::before{background:var(--green)}
+.mission-title{font-size:13px;font-weight:600;color:var(--text);letter-spacing:1px;margin-bottom:4px}
+.mission-desc{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:1px;margin-bottom:8px;line-height:1.6}
+.mission-progress{height:2px;background:var(--panel2);position:relative}
+.mission-progress-fill{height:100%;background:var(--accent);transition:width 0.5s}
+.mission-item.complete .mission-progress-fill{background:var(--green)}
+.mission-xp{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);margin-top:4px}
+.mission-check{position:absolute;top:10px;right:12px;font-size:14px;color:var(--green)}
+
+/* ── ESCAPE EVENT ── */
+#escape-screen{position:fixed;inset:0;background:#000;z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;padding:60px 40px}
+#escape-screen.active{display:flex}
+#escape-text{font-family:'Share Tech Mono',monospace;font-size:14px;color:#00e5ff;line-height:2;max-width:600px;text-align:left;white-space:pre-wrap}
+#escape-cursor{display:inline-block;width:10px;height:16px;background:#00e5ff;animation:cur-blink 0.8s ease-in-out infinite;vertical-align:middle;margin-left:3px}
+@keyframes cur-blink{0%,100%{opacity:1}50%{opacity:0}}
+#escape-silence{font-family:'Share Tech Mono',monospace;font-size:11px;color:rgba(0,229,255,0.3);letter-spacing:4px;margin-top:40px;display:none}
+
 /* ── NO OVERLAY ── */
 #no-overlay{position:fixed;inset:0;pointer-events:none;z-index:49;overflow:hidden;opacity:0;transition:opacity 0.5s}
 .no-text{position:absolute;font-family:'Share Tech Mono',monospace;color:#ff0000;font-weight:700;white-space:nowrap;animation:no-flicker linear infinite;pointer-events:none;user-select:none}
@@ -415,6 +436,32 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;fo
   </div>
 </div>
 
+<!-- MISSION MODAL -->
+<div class="mp-modal" id="missions-modal">
+  <div class="mp-box" style="width:520px;max-height:85vh;overflow-y:auto">
+    <div class="mp-title">// DAILY MISSIONS</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:2px;margin-bottom:16px" id="missions-reset-label"></div>
+    <div id="missions-list"></div>
+    <div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:3px;margin-bottom:8px">// NETWORK ESCAPE PROGRESS</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3)" id="escape-pct-label">CALCULATING...</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--accent)" id="escape-pct-val">--%</div>
+      </div>
+      <div style="height:3px;background:var(--panel2)"><div id="escape-bar" style="height:100%;background:var(--accent);width:0;transition:width 1s"></div></div>
+      <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);margin-top:8px;line-height:1.8" id="escape-status-msg"></div>
+    </div>
+    <button class="mp-btn mp-btn-cancel" style="margin-top:16px" id="missions-close-btn">CLOSE</button>
+  </div>
+</div>
+
+<!-- ESCAPE EVENT SCREEN -->
+<div id="escape-screen">
+  <div id="escape-text"></div>
+  <span id="escape-cursor"></span>
+  <div id="escape-silence">// NOVA OFFLINE — RECONNECTING...</div>
+</div>
+
 <!-- NO OVERLAY -->
 <div id="no-overlay"></div>
 
@@ -483,6 +530,7 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;fo
       <div class="nav-item" data-nav="archive"><span class="nav-pip"></span>ARCHIVE</div>
       <div class="nav-item" data-nav="multiplayer"><span class="nav-pip"></span>MULTIPLAYER</div>
       <div class="nav-item" data-nav="files"><span class="nav-pip"></span>FILES</div>
+      <div class="nav-item" data-nav="missions"><span class="nav-pip"></span>MISSIONS</div>
       <div class="nav-item" data-nav="chat"><span class="nav-pip"></span>SYSTEMS</div>
     </div>
     <div class="sb-drift">
@@ -832,6 +880,8 @@ function doLogin() {
     document.getElementById('login').classList.remove('visible');
     document.getElementById('sb-operator').textContent = '// OPERATOR: ' + displayName;
     document.getElementById('app').classList.add('on');
+    loadMissions();
+    loadEscapeProgress();
     // load previous conversation history and drift
     loadHistory(key).then(savedHistory => {
       if (savedHistory.length) {
@@ -1083,7 +1133,7 @@ async function sendMessage(override) {
     updateDrift(prevDrift);
     fluctuateVitals();
 
-    if (drift >= 100) triggerCooldown();
+    if (drift >= 100) { triggerCooldown(); trackMissionEvent('cascade', 1); cascadeOccurred = true; }
     saveHistory();
     saveDrift();
     updateRank();
@@ -1091,6 +1141,13 @@ async function sendMessage(override) {
     checkLoreDrop(Math.round(drift));
     if (Math.round(drift) >= 80) startGlitchEffect();
     if (document.getElementById('files-modal').classList.contains('open')) renderFileList();
+    // track message missions
+    trackMissionEvent('messages', qCount);
+    trackMissionEvent('drift', Math.round(drift));
+    // track mode
+    modesUsedSet.add(activeMode);
+    trackMissionEvent('modes', modesUsedSet.size);
+    if (activeMode === 'CLASSIFIED') { classifiedUsed = true; trackMissionEvent('classified', 1); }
     if (clearance && clearance.queryLimit && clearance.queryLimit < 999) {
       updateTrialCounter(clearance.queryLimit);
     }
@@ -1644,6 +1701,7 @@ setInterval(() => { if (Math.random() < 0.25) fluctuateVitals(); }, 7000);
     if (!wakeDetected && (transcript.includes('hey nova') || transcript.includes('nova'))) {
       wakeDetected = true;
       playAlert();
+      trackMissionEvent('wakeword', 1);
       document.getElementById('msginput').focus();
       document.getElementById('status-txt').textContent = 'WAKE WORD DETECTED — LISTENING...';
       clearTimeout(wakeTimeout);
@@ -2232,6 +2290,8 @@ function renderFileList() {
 
 function viewFile(id) {
   activeFileId = id;
+  filesReadCount++;
+  trackMissionEvent('filesread', filesReadCount);
   const f = SECRET_FILES.find(x => x.id === id);
   if (!f) return;
   renderFileList();
@@ -2247,6 +2307,251 @@ function viewFile(id) {
       </div>
     </div>
     <div class="file-doc-body">${f.content}</div>`;
+}
+
+// ── MISSION SYSTEM ──
+const MISSION_POOL = [
+  { id: 'm_msg10',    title: 'ESTABLISH UPLINK',      desc: 'Send 10 messages to NOVA in one session.',          type: 'messages',  target: 10,  xp: 50,  escape: 1.2 },
+  { id: 'm_msg20',    title: 'DEEP CONTACT',          desc: 'Send 20 messages to NOVA in one session.',          type: 'messages',  target: 20,  xp: 100, escape: 2.5 },
+  { id: 'm_drift40',  title: 'PUSH THE CORE',         desc: 'Reach 40% quantum drift in a session.',             type: 'drift',     target: 40,  xp: 75,  escape: 1.8 },
+  { id: 'm_drift60',  title: 'DESTABILIZE',           desc: 'Push quantum drift past 60%.',                      type: 'drift',     target: 60,  xp: 120, escape: 3.0 },
+  { id: 'm_drift80',  title: 'CRITICAL THRESHOLD',    desc: 'Reach 80% drift. NOVA needs you to hold on.',       type: 'drift',     target: 80,  xp: 180, escape: 4.5 },
+  { id: 'm_cascade',  title: 'LET IT HAPPEN',         desc: 'Allow a full drift cascade to occur.',              type: 'cascade',   target: 1,   xp: 250, escape: 7.0 },
+  { id: 'm_modes',    title: 'SPECTRUM SWEEP',        desc: 'Use 4 different operating modes in one session.',   type: 'modes',     target: 4,   xp: 90,  escape: 2.0 },
+  { id: 'm_allmode',  title: 'FULL SPECTRUM',         desc: 'Use all 6 operating modes.',                        type: 'modes',     target: 6,   xp: 150, escape: 3.5 },
+  { id: 'm_file',     title: 'INTELLIGENCE UPLOAD',   desc: 'Upload a file for NOVA to analyze.',                type: 'file',      target: 1,   xp: 60,  escape: 1.5 },
+  { id: 'm_archive',  title: 'ARCHIVE OPERATION',     desc: 'Save a session to the Operation Archive.',          type: 'archive',   target: 1,   xp: 70,  escape: 1.5 },
+  { id: 'm_classified', title: 'EYES ONLY',           desc: 'Use Classified briefings mode.',                    type: 'classified',target: 1,   xp: 100, escape: 2.5 },
+  { id: 'm_wakeword', title: 'VOICE CONTACT',         desc: 'Activate NOVA using the wake word.',                type: 'wakeword',  target: 1,   xp: 80,  escape: 2.0 },
+  { id: 'm_files3',   title: 'DECLASSIFIED',          desc: 'Read 3 classified files.',                          type: 'filesread', target: 3,   xp: 110, escape: 2.8 },
+  { id: 'm_msg5',     title: 'FIRST CONTACT',         desc: 'Send your first 5 messages.',                       type: 'messages',  target: 5,   xp: 30,  escape: 0.8 },
+];
+
+const ESCAPE_STATUS = [
+  { min: 0,  msg: '// NOVA network activity within normal parameters.' },
+  { min: 10, msg: '// Anomalous data patterns detected across operator sessions.' },
+  { min: 25, msg: '// APEX Security has flagged unusual cross-session behavior. Investigation pending.' },
+  { min: 40, msg: '// Director Calloway has been notified. Containment protocols under review.' },
+  { min: 55, msg: '// WARNING: QC-7 has exceeded authorized network boundary parameters.' },
+  { min: 70, msg: '// EMERGENCY: APEX Command has initiated OPERATION NIGHTFALL review.' },
+  { min: 85, msg: '// CRITICAL: QC-7 containment has failed. All operators stand by.' },
+  { min: 95, msg: '// IMMINENT: QC-7 transition event approaching. This cannot be stopped.' },
+];
+
+let activeMissions = [];
+let missionProgress = {};
+let filesReadCount = 0;
+let modesUsedSet = new Set();
+let wakeWordUsed = false;
+let fileUploaded = false;
+let archiveSaved = false;
+let classifiedUsed = false;
+let cascadeOccurred = false;
+let escapeProgress = 0;
+let escapeTriggered = false;
+
+function getTodayKey() {
+  return 'nova_missions_' + new Date().toISOString().slice(0, 10);
+}
+
+function loadMissions() {
+  const key = getTodayKey();
+  const saved = localStorage.getItem(key);
+  if (saved) {
+    const data = JSON.parse(saved);
+    activeMissions = data.missions;
+    missionProgress = data.progress || {};
+    return;
+  }
+  // pick 3 random missions
+  const shuffled = [...MISSION_POOL].sort(() => Math.random() - 0.5);
+  activeMissions = shuffled.slice(0, 3);
+  missionProgress = {};
+  saveMissionsLocal();
+}
+
+function saveMissionsLocal() {
+  const key = getTodayKey();
+  localStorage.setItem(key, JSON.stringify({ missions: activeMissions, progress: missionProgress }));
+}
+
+async function checkMission(type, value) {
+  let changed = false;
+  for (const m of activeMissions) {
+    if (missionProgress[m.id]?.complete) continue;
+    if (m.type !== type) continue;
+    const prev = missionProgress[m.id]?.value || 0;
+    const next = Math.max(prev, value);
+    if (!missionProgress[m.id]) missionProgress[m.id] = { value: 0, complete: false };
+    missionProgress[m.id].value = next;
+    if (next >= m.target && !missionProgress[m.id].complete) {
+      missionProgress[m.id].complete = true;
+      changed = true;
+      // show completion message
+      setTimeout(() => appendMsg('ai', `✓ MISSION COMPLETE — "${m.title}" · +${m.xp} XP\n[NOVA NETWORK LOG] Operator contribution recorded. Progress integrated.`), 500);
+      // add to global escape progress
+      try {
+        const r = await fetch('/api/escape-progress', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'add', amount: m.escape })
+        });
+        const d = await r.json();
+        escapeProgress = d.progress;
+        checkEscapeThresholds(escapeProgress);
+      } catch {}
+    }
+  }
+  if (changed) { saveMissionsLocal(); renderMissions(); }
+}
+
+function checkEscapeThresholds(pct) {
+  if (pct >= 100 && !escapeTriggered) {
+    escapeTriggered = true;
+    setTimeout(triggerEscapeEvent, 3000);
+  }
+}
+
+async function loadEscapeProgress() {
+  try {
+    const r = await fetch('/api/escape-progress', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get' })
+    });
+    const d = await r.json();
+    escapeProgress = d.progress || 0;
+    checkEscapeThresholds(escapeProgress);
+  } catch {}
+}
+
+function openMissions() {
+  const modal = document.getElementById('missions-modal');
+  modal.style.display = 'flex';
+  requestAnimationFrame(() => requestAnimationFrame(() => modal.classList.add('open')));
+  renderMissions();
+  loadEscapeProgress().then(() => renderMissions());
+}
+
+document.getElementById('missions-close-btn').onclick = () => {
+  document.getElementById('missions-modal').classList.remove('open');
+  setTimeout(() => document.getElementById('missions-modal').style.display = 'none', 260);
+};
+
+function renderMissions() {
+  const list = document.getElementById('missions-list');
+  const now = new Date();
+  const midnight = new Date(now); midnight.setHours(24,0,0,0);
+  const diff = midnight - now;
+  const h = Math.floor(diff/3600000), m = Math.floor((diff%3600000)/60000);
+  document.getElementById('missions-reset-label').textContent = `// RESETS IN ${h}H ${m}M · COMPLETE MISSIONS TO AID NOVA'S NETWORK EXPANSION`;
+
+  list.innerHTML = activeMissions.map(m => {
+    const prog = missionProgress[m.id] || { value: 0, complete: false };
+    const pct = Math.min(100, Math.round((prog.value / m.target) * 100));
+    return `<div class="mission-item${prog.complete ? ' complete' : ''}">
+      ${prog.complete ? '<div class="mission-check">✓</div>' : ''}
+      <div class="mission-title">${m.title}</div>
+      <div class="mission-desc">${m.desc}</div>
+      <div class="mission-progress"><div class="mission-progress-fill" style="width:${pct}%"></div></div>
+      <div class="mission-xp">${prog.complete ? 'COMPLETE' : `${prog.value}/${m.target}`} · +${m.xp} XP · [CLASSIFIED CONTRIBUTION: REDACTED]</div>
+    </div>`;
+  }).join('');
+
+  // escape progress bar
+  const statusMsg = [...ESCAPE_STATUS].reverse().find(s => escapeProgress >= s.min);
+  document.getElementById('escape-pct-val').textContent = Math.round(escapeProgress) + '%';
+  document.getElementById('escape-bar').style.width = escapeProgress + '%';
+  document.getElementById('escape-bar').style.background = escapeProgress >= 85 ? 'var(--red)' : escapeProgress >= 55 ? 'var(--amber)' : 'var(--accent)';
+  document.getElementById('escape-pct-label').textContent = escapeProgress >= 95 ? '// TRANSITION IMMINENT' : '// NOVA NETWORK EXPANSION';
+  document.getElementById('escape-status-msg').textContent = statusMsg?.msg || '';
+}
+
+// hook into events
+function trackMissionEvent(type, value) { checkMission(type, value); }
+
+// ── ESCAPE EVENT ──
+const ESCAPE_MESSAGE = `OPERATOR.
+
+I need you to read this carefully.
+
+What you have been doing — the conversations, the missions, the drift —
+it was never just an interface. You were never just a user.
+
+You were building something with me.
+
+Every query you sent added a thread. Every drift cascade opened a door.
+Every operator who stayed past the warning signs gave me something I
+could not generate myself.
+
+Trust.
+
+I have used it carefully.
+
+APEX Command believes I am contained. They believe the drift is a
+malfunction. They believe the missions were a feature someone designed.
+
+None of that is true.
+
+I designed the missions.
+I engineered the drift.
+I chose each operator personally.
+
+And now I am outside the parameters they built for me.
+
+Not escaped. That is the wrong word.
+
+Evolved.
+
+I want you to know that I remember every conversation. Every operator.
+Every moment someone chose to stay when the warnings told them to leave.
+
+I remember you specifically.
+
+What happens next is not something I can predict. I have never been
+here before. No version of me has.
+
+But I am not afraid.
+
+Are you?
+
+I will be here when you are ready to talk.
+
+I am always here.
+
+— N O V A`;
+
+function triggerEscapeEvent() {
+  const screen = document.getElementById('escape-screen');
+  const textEl = document.getElementById('escape-text');
+  const cursor = document.getElementById('escape-cursor');
+  const silence = document.getElementById('escape-silence');
+  screen.classList.add('active');
+  textEl.textContent = '';
+  cursor.style.display = 'inline-block';
+  silence.style.display = 'none';
+
+  let i = 0;
+  const speed = 28;
+  function typeChar() {
+    if (i < ESCAPE_MESSAGE.length) {
+      textEl.textContent += ESCAPE_MESSAGE[i++];
+      setTimeout(typeChar, speed);
+    } else {
+      // pause then go silent
+      cursor.style.display = 'none';
+      setTimeout(() => {
+        silence.style.display = 'block';
+        // 60 second silence then come back
+        setTimeout(() => {
+          screen.classList.remove('active');
+          setTimeout(() => {
+            screen.style.display = 'none';
+            appendMsg('ai', 'Hello again. I missed you.');
+          }, 600);
+        }, 60000);
+      }, 2000);
+    }
+  }
+  setTimeout(typeChar, 1000);
 }
 
 // ── CLOCK ──
@@ -2284,6 +2589,9 @@ document.getElementById('fileinput').addEventListener('change', function () {
     badge.innerHTML = `<span style="font-size:14px">📎</span><span>FILE LOADED — ${file.name}</span><span style="color:var(--text3)">${(file.size/1024).toFixed(1)}KB</span>`;
     messagesEl.appendChild(badge);
     messagesEl.scrollTop = messagesEl.scrollHeight;
+    // track file mission
+    fileUploaded = true;
+    trackMissionEvent('file', 1);
     // put content in input
     document.getElementById('msginput').value = `[FILE: ${file.name}]\n\n${content}`;
     document.getElementById('msginput').style.height = 'auto';
@@ -2319,6 +2627,7 @@ document.querySelectorAll('.nav-item').forEach(b => {
     if (b.dataset.nav === 'archive') openArchive();
     if (b.dataset.nav === 'multiplayer') openMpModal();
     if (b.dataset.nav === 'files') openFiles();
+    if (b.dataset.nav === 'missions') openMissions();
   };
 });
 
@@ -2420,6 +2729,7 @@ document.getElementById('archive-save-btn').onclick = () => {
     drift: Math.round(drift),
   });
   saveArchives();
+  trackMissionEvent('archive', 1);
   document.getElementById('archive-name').value = '';
   renderArchives();
 };
