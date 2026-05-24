@@ -877,7 +877,11 @@ function doLogin() {
   .then(r => r.json())
   .then(data => {
     if (data.error || !data.clearance) {
-      err.textContent = '⚠ INVALID KEY OR EMAIL — CONTACT APEX COMMAND';
+      if (data.expired) {
+        err.textContent = '⚠ TRIAL KEY EXPIRED — CONTACT APEX COMMAND TO UPGRADE';
+      } else {
+        err.textContent = '⚠ INVALID KEY OR EMAIL — CONTACT APEX COMMAND';
+      }
       document.getElementById('l-btn').disabled = false;
       return;
     }

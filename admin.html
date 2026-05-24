@@ -193,7 +193,7 @@ document.getElementById('gen-btn').onclick = async () => {
     const data = await res.json();
     if (!res.ok) throw new Error(data.error);
     document.getElementById('result-key').textContent = data.key;
-    document.getElementById('result-tier').textContent = tier + ' · ' + name + ' · ' + email;
+    document.getElementById('result-tier').textContent = tier + ' · ' + name + ' · ' + email + (data.expiresAt ? ` · EXPIRES ${new Date(data.expiresAt).toLocaleDateString()}` : '');
     resultBox.style.display = 'block';
     sessionLog.unshift({ key: data.key, tier, email, name, time: new Date().toLocaleTimeString() });
     renderLog();
@@ -263,7 +263,7 @@ async function loadOperators() {
           <div class="op-meta">
             ${op.name} · ${op.email}<br>
             LOGINS: ${op.loginCount || 0} · CREATED: ${op.createdAt ? new Date(op.createdAt).toLocaleDateString() : '—'}<br>
-            LAST SEEN: ${op.lastLogin ? new Date(op.lastLogin).toLocaleString() : 'Never'}
+            LAST SEEN: ${op.lastLogin ? new Date(op.lastLogin).toLocaleString() : 'Never'}${op.expiresAt ? `<br>EXPIRES: ${new Date(op.expiresAt).toLocaleDateString()} ${new Date() > new Date(op.expiresAt) ? '⚠ EXPIRED' : ''}` : ''}
           </div>
         </div>
         <div class="op-actions">
