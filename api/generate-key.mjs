@@ -1,0 +1,49 @@
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+
+  const { tier, email, name, adminSecret } = req.body;
+
+  if (adminSecret !== process.env.NOVA_ADMIN_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const tiers = ['TRIAL', 'RECRUIT', 'AGENT', 'COMMANDER'];
+  if (!tiers.includes(tier)) return res.status(400).json({ error: 'Invalid tier' });
+  if (!email || !name) return res.status(400).json({ error: 'Email and name required' });
+
+  const prefixMap = { TRIAL: 'TRIAL', RECRUIT: 'RECRUIT', AGENT: 'AGENT', COMMANDER: 'CMD' };
+  const prefix = prefixMap[tier];
+  const num = String(Math.floor(1000 + Math.random() * 9000));
+  const key = `${prefix}-${num}`;
+
+  const modeMap = {
+    TRIAL:     ['STANDARD'],
+    RECRUIT:   ['STANDARD', 'TACTICAL'],
+    AGENT:     ['STANDARD', 'TACTICAL', 'ANALYSIS', 'CODE', 'RESEARCH', 'CREATIVE'],
+    COMMANDER: ['STANDARD', 'TACTICAL', 'ANALYSIS', 'CODE', 'RESEARCH', 'CREATIVE'],
+  };
+  const archiveMap  = { TRIAL: 0, RECRUIT: 5, AGENT: 999, COMMANDER: 999 };
+  const queryLimit  = { TRIAL: 10, RECRUIT: 999, AGENT: 999, COMMANDER: 999 };
+  const levelMap    = { TRIAL: 0, RECRUIT: 1, AGENT: 2, COMMANDER: 3 };
+
+  const value = JSON.stringify({
+    tier,
+    level: levelMap[tier],
+    modes: modeMap[tier],
+    archiveLimit: archiveMap[tier],
+    queryLimit: queryLimit[tier],
+    email: email.toLowerCase(),
+    name: name.trim(),
+    createdAt: new Date().toISOString(),
+  });
+
+  const upstashUrl   = process.env.UPSTASH_REDIS_REST_URL;
+  const upstashToken = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  const r = await fetch(`${upstashUrl}/set/nova_key_${key}/${encodeURIComponent(value)}`, {
+    headers: { Authorization: `Bearer ${upstashToken}` },
+  });
+
+  if (!r.ok) return res.status(500).json({ error: 'Failed to store key' });
+  return res.status(200).json({ key });
+}
