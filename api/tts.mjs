@@ -7,7 +7,7 @@ export default async function handler(req, res) {
   const clean = text.replace(/[#*`\[\]]/g, '').replace(/\n+/g, ' ').trim().slice(0, 500);
 
   try {
-    const r = await fetch('https://api.elevenlabs.io/v1/text-to-speech/QeKcckTBICc3UuWL7ETc', {
+    const r = await fetch('https://api.elevenlabs.io/v1/text-to-speech/bIHbv24MWmeRgasZH58o', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
