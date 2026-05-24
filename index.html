@@ -160,7 +160,9 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;fo
 .msg{display:flex;flex-direction:column;gap:3px;max-width:84%}
 .msg.user{align-self:flex-end;align-items:flex-end}
 .msg.ai{align-self:flex-start}
-.msg-header{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);padding:0 2px}
+.msg{position:relative}
+.msg-header{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);padding:0 2px;opacity:0;transition:opacity 0.2s;height:14px;margin-bottom:2px}
+.msg:hover .msg-header{opacity:1}
 .msg-bubble{padding:11px 14px;font-size:14px;line-height:1.65;position:relative;white-space:pre-wrap;word-break:break-word}
 .msg.user .msg-bubble{background:rgba(0,229,255,0.07);border:1px solid var(--border);border-top-right-radius:0}
 .msg.ai .msg-bubble{background:var(--panel);border:1px solid var(--border);border-top-left-radius:0}
