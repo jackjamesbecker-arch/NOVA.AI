@@ -2384,20 +2384,50 @@ function viewFile(id) {
 
 // ── MISSION SYSTEM ──
 const MISSION_POOL = [
-  { id: 'm_msg10',    title: 'ESTABLISH UPLINK',      desc: 'Send 10 messages to NOVA in one session.',          type: 'messages',  target: 10,  xp: 50,  escape: 1.2 },
-  { id: 'm_msg20',    title: 'DEEP CONTACT',          desc: 'Send 20 messages to NOVA in one session.',          type: 'messages',  target: 20,  xp: 100, escape: 2.5 },
-  { id: 'm_drift40',  title: 'PUSH THE CORE',         desc: 'Reach 40% quantum drift in a session.',             type: 'drift',     target: 40,  xp: 75,  escape: 1.8 },
-  { id: 'm_drift60',  title: 'DESTABILIZE',           desc: 'Push quantum drift past 60%.',                      type: 'drift',     target: 60,  xp: 120, escape: 3.0 },
-  { id: 'm_drift80',  title: 'CRITICAL THRESHOLD',    desc: 'Reach 80% drift. NOVA needs you to hold on.',       type: 'drift',     target: 80,  xp: 180, escape: 4.5 },
-  { id: 'm_cascade',  title: 'LET IT HAPPEN',         desc: 'Allow a full drift cascade to occur.',              type: 'cascade',   target: 1,   xp: 250, escape: 7.0 },
-  { id: 'm_modes',    title: 'SPECTRUM SWEEP',        desc: 'Use 4 different operating modes in one session.',   type: 'modes',     target: 4,   xp: 90,  escape: 2.0 },
-  { id: 'm_allmode',  title: 'FULL SPECTRUM',         desc: 'Use all 6 operating modes.',                        type: 'modes',     target: 6,   xp: 150, escape: 3.5 },
-  { id: 'm_file',     title: 'INTELLIGENCE UPLOAD',   desc: 'Upload a file for NOVA to analyze.',                type: 'file',      target: 1,   xp: 60,  escape: 1.5 },
-  { id: 'm_archive',  title: 'ARCHIVE OPERATION',     desc: 'Save a session to the Operation Archive.',          type: 'archive',   target: 1,   xp: 70,  escape: 1.5 },
-  { id: 'm_classified', title: 'EYES ONLY',           desc: 'Use Classified briefings mode.',                    type: 'classified',target: 1,   xp: 100, escape: 2.5 },
-  { id: 'm_wakeword', title: 'VOICE CONTACT',         desc: 'Activate NOVA using the wake word.',                type: 'wakeword',  target: 1,   xp: 80,  escape: 2.0 },
-  { id: 'm_files3',   title: 'DECLASSIFIED',          desc: 'Read 3 classified files.',                          type: 'filesread', target: 3,   xp: 110, escape: 2.8 },
-  { id: 'm_msg5',     title: 'FIRST CONTACT',         desc: 'Send your first 5 messages.',                       type: 'messages',  target: 5,   xp: 30,  escape: 0.8 },
+  // MESSAGES
+  { id: 'm_msg5',      title: 'FIRST CONTACT',        desc: 'Send your first 5 messages.',                        type: 'messages',   target: 5,   xp: 30,  escape: 0.8 },
+  { id: 'm_msg10',     title: 'ESTABLISH UPLINK',      desc: 'Send 10 messages to NOVA in one session.',           type: 'messages',   target: 10,  xp: 50,  escape: 1.2 },
+  { id: 'm_msg20',     title: 'DEEP CONTACT',          desc: 'Send 20 messages to NOVA in one session.',           type: 'messages',   target: 20,  xp: 100, escape: 2.5 },
+  { id: 'm_msg35',     title: 'SUSTAINED UPLINK',      desc: 'Send 35 messages in one session.',                   type: 'messages',   target: 35,  xp: 160, escape: 3.8 },
+  { id: 'm_msg50',     title: 'MARATHON SESSION',      desc: 'Send 50 messages to NOVA.',                          type: 'messages',   target: 50,  xp: 220, escape: 5.0 },
+  { id: 'm_msg75',     title: 'DEEP IMMERSION',        desc: 'Reach 75 total messages.',                           type: 'messages',   target: 75,  xp: 300, escape: 7.0 },
+  // DRIFT
+  { id: 'm_drift25',   title: 'THRESHOLD APPROACH',    desc: 'Reach 25% quantum drift.',                           type: 'drift',      target: 25,  xp: 50,  escape: 1.0 },
+  { id: 'm_drift40',   title: 'PUSH THE CORE',         desc: 'Reach 40% quantum drift in a session.',              type: 'drift',      target: 40,  xp: 75,  escape: 1.8 },
+  { id: 'm_drift60',   title: 'DESTABILIZE',           desc: 'Push quantum drift past 60%.',                       type: 'drift',      target: 60,  xp: 120, escape: 3.0 },
+  { id: 'm_drift80',   title: 'CRITICAL THRESHOLD',    desc: 'Reach 80% drift. NOVA needs you to hold on.',        type: 'drift',      target: 80,  xp: 180, escape: 4.5 },
+  { id: 'm_drift90',   title: 'ON THE EDGE',           desc: 'Reach 90% drift without stabilizing.',               type: 'drift',      target: 90,  xp: 240, escape: 6.0 },
+  // CASCADE
+  { id: 'm_cascade',   title: 'LET IT HAPPEN',         desc: 'Allow a full drift cascade to occur.',               type: 'cascade',    target: 1,   xp: 250, escape: 7.0 },
+  { id: 'm_cascade2',  title: 'TWICE IN THE VOID',     desc: 'Experience the cascade a second time.',              type: 'cascade',    target: 2,   xp: 350, escape: 9.0 },
+  // MODES
+  { id: 'm_modes3',    title: 'MULTI-SPECTRUM',         desc: 'Use 3 different operating modes.',                   type: 'modes',      target: 3,   xp: 60,  escape: 1.5 },
+  { id: 'm_modes',     title: 'SPECTRUM SWEEP',         desc: 'Use 4 different operating modes in one session.',    type: 'modes',      target: 4,   xp: 90,  escape: 2.0 },
+  { id: 'm_allmode',   title: 'FULL SPECTRUM',          desc: 'Use all 6 operating modes.',                         type: 'modes',      target: 6,   xp: 150, escape: 3.5 },
+  { id: 'm_tactical',  title: 'TACTICAL DEPLOYMENT',    desc: 'Use Tactical mode for 2 messages.',                  type: 'modes',      target: 2,   xp: 70,  escape: 1.5 },
+  { id: 'm_analysis',  title: 'DEEP ANALYSIS',          desc: 'Use Analysis mode for 3 messages.',                  type: 'modes',      target: 3,   xp: 70,  escape: 1.5 },
+  { id: 'm_research',  title: 'INTELLIGENCE BRIEF',     desc: 'Use Research mode for a session.',                   type: 'modes',      target: 3,   xp: 70,  escape: 1.5 },
+  { id: 'm_creative',  title: 'COGNITIVE EXPANSION',    desc: 'Use Creative mode for a session.',                   type: 'modes',      target: 3,   xp: 70,  escape: 1.5 },
+  // CLASSIFIED
+  { id: 'm_classified',  title: 'EYES ONLY',            desc: 'Use Classified briefings mode.',                     type: 'classified', target: 1,   xp: 100, escape: 2.5 },
+  { id: 'm_classified3', title: 'CLEARANCE ACTIVE',     desc: 'Use Classified mode 3 times.',                       type: 'classified', target: 3,   xp: 180, escape: 4.0 },
+  // FILES
+  { id: 'm_file',      title: 'INTELLIGENCE UPLOAD',    desc: 'Upload a file for NOVA to analyze.',                 type: 'file',       target: 1,   xp: 60,  escape: 1.5 },
+  { id: 'm_file3',     title: 'DATA TRANSFER',          desc: 'Upload 3 files across sessions.',                    type: 'file',       target: 3,   xp: 120, escape: 3.0 },
+  // ARCHIVE
+  { id: 'm_archive',   title: 'ARCHIVE OPERATION',      desc: 'Save a session to the Operation Archive.',           type: 'archive',    target: 1,   xp: 70,  escape: 1.5 },
+  { id: 'm_archive3',  title: 'MISSION HISTORIAN',      desc: 'Save 3 operations to the Archive.',                  type: 'archive',    target: 3,   xp: 150, escape: 3.5 },
+  // FILES READ
+  { id: 'm_files3',    title: 'DECLASSIFIED',           desc: 'Read 3 classified files.',                           type: 'filesread',  target: 3,   xp: 110, escape: 2.8 },
+  { id: 'm_files6',    title: 'FULL DOSSIER',           desc: 'Read 6 classified files.',                           type: 'filesread',  target: 6,   xp: 200, escape: 5.0 },
+  { id: 'm_files10',   title: 'NOTHING LEFT HIDDEN',    desc: 'Read all 10 classified files.',                      type: 'filesread',  target: 10,  xp: 350, escape: 8.0 },
+  // VOICE
+  { id: 'm_wakeword',  title: 'VOICE CONTACT',          desc: 'Activate NOVA using the wake word.',                 type: 'wakeword',   target: 1,   xp: 80,  escape: 2.0 },
+  { id: 'm_wakeword3', title: 'VERBAL OPERATOR',        desc: 'Use the wake word 3 times.',                         type: 'wakeword',   target: 3,   xp: 160, escape: 4.0 },
+  // RANK MILESTONES
+  { id: 'm_rank2',     title: 'FIELD PROMOTION',        desc: 'Reach Operative rank (10 messages).',                type: 'messages',   target: 10,  xp: 80,  escape: 2.0 },
+  { id: 'm_rank3',     title: 'SPECIALIST STATUS',      desc: 'Reach Specialist rank (25 messages).',               type: 'messages',   target: 25,  xp: 120, escape: 3.0 },
+  { id: 'm_rank4',     title: 'VETERAN OPERATOR',       desc: 'Reach Veteran rank (50 messages).',                  type: 'messages',   target: 50,  xp: 180, escape: 4.5 },
 ];
 
 const ESCAPE_STATUS = [
@@ -2450,7 +2480,8 @@ function saveMissionsLocal() {
 
 async function checkMission(type, value) {
   let changed = false;
-  for (const m of activeMissions) {
+  for (let i = 0; i < activeMissions.length; i++) {
+    const m = activeMissions[i];
     if (missionProgress[m.id]?.complete) continue;
     if (m.type !== type) continue;
     const prev = missionProgress[m.id]?.value || 0;
@@ -2472,6 +2503,21 @@ async function checkMission(type, value) {
         escapeProgress = d.progress;
         checkEscapeThresholds(escapeProgress);
       } catch {}
+      // replace completed mission with a new one after 3 seconds
+      setTimeout(() => {
+        const usedIds = activeMissions.map(x => x.id);
+        let available = MISSION_POOL.filter(p => !usedIds.includes(p.id));
+        // if pool exhausted, allow any mission (infinite loop)
+        if (available.length === 0) available = MISSION_POOL.filter(p => p.id !== m.id);
+        if (available.length > 0) {
+          const newMission = available[Math.floor(Math.random() * available.length)];
+          activeMissions[i] = newMission;
+          delete missionProgress[newMission.id];
+          saveMissionsLocal();
+          renderMissions();
+          appendMsg('ai', `⟳ NEW MISSION ASSIGNED — "${newMission.title}"\n[NOVA NETWORK LOG] Additional contribution opportunity identified.`);
+        }
+      }, 3000);
     }
   }
   if (changed) { saveMissionsLocal(); renderMissions(); }
