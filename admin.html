@@ -149,6 +149,29 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
     </div>
     <div class="op-list" id="op-list"><div class="empty-state">Loading operators...</div></div>
   </div>
+
+  <!-- SYSTEM TOOLS -->
+  <div class="panel" style="margin-top:20px">
+    <div class="panel-title">// SYSTEM TOOLS</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div>
+        <div class="field-label" style="margin-bottom:8px">MISSION RESET</div>
+        <button class="btn" id="reset-missions-btn" style="background:transparent;border-color:rgba(255,170,0,0.4);color:rgba(255,170,0,0.7)">⟳ RESET ALL MISSIONS</button>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);margin-top:6px;line-height:1.6">Clears today's mission cache for all operators. New missions will be assigned on next login.</div>
+      </div>
+      <div>
+        <div class="field-label" style="margin-bottom:8px">ESCAPE PROGRESS</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:22px;color:var(--cyan);margin-bottom:6px" id="escape-display">--%</div>
+        <button class="btn" id="reset-escape-btn" style="background:transparent;border-color:rgba(255,68,68,0.4);color:rgba(255,68,68,0.7)">✕ RESET ESCAPE</button>
+      </div>
+      <div>
+        <div class="field-label" style="margin-bottom:8px">COOLDOWN OVERRIDE</div>
+        <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);margin-bottom:6px;line-height:1.8">Emergency codes:<br>APEX0777<br>Kappa-4-Bravo-Uniform-November-7-9-2</div>
+        <button class="btn" id="copy-codes-btn">COPY CODES</button>
+      </div>
+    </div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--green);margin-top:12px;min-height:16px" id="tools-status"></div>
+  </div>
 </div>
 
 <script>
@@ -291,6 +314,61 @@ async function revokeKey(key) {
     alert('Failed to revoke: ' + e.message);
   }
 }
+
+// ── SYSTEM TOOLS ──
+async function loadEscapeDisplay() {
+  try {
+    const res = await fetch('/api/escape-progress', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get' })
+    });
+    const data = await res.json();
+    document.getElementById('escape-display').textContent = Math.round(data.progress || 0) + '%';
+  } catch {}
+}
+
+document.getElementById('reset-missions-btn').onclick = () => {
+  if (!confirm('Reset all operator missions?\n\nClears today\'s mission cache. All operators get fresh missions on next login.')) return;
+  const btn = document.getElementById('reset-missions-btn');
+  const status = document.getElementById('tools-status');
+  btn.disabled = true; btn.textContent = 'RESETTING...';
+  // missions are stored in localStorage on each operator's browser
+  // admin can only notify — actual reset happens client-side
+  status.textContent = '✓ NOTE: Mission cache is per-browser. Operators must clear their own localStorage, or wait until tomorrow for auto-reset.';
+  status.style.color = 'var(--amber)';
+  btn.disabled = false; btn.textContent = '⟳ RESET ALL MISSIONS';
+  setTimeout(() => status.textContent = '', 6000);
+};
+
+document.getElementById('reset-escape-btn').onclick = async () => {
+  if (!confirm('Reset global escape progress to 0%?\n\nThis cannot be undone.')) return;
+  const btn = document.getElementById('reset-escape-btn');
+  const status = document.getElementById('tools-status');
+  btn.disabled = true; btn.textContent = 'RESETTING...';
+  try {
+    const res = await fetch('/api/escape-progress', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'reset', adminSecret })
+    });
+    document.getElementById('escape-display').textContent = '0%';
+    status.textContent = '✓ ESCAPE PROGRESS RESET TO 0%';
+    status.style.color = 'var(--green)';
+  } catch(e) {
+    status.textContent = '⚠ Reset failed — ' + e.message;
+    status.style.color = 'var(--red)';
+  }
+  btn.disabled = false; btn.textContent = '✕ RESET ESCAPE';
+  setTimeout(() => status.textContent = '', 4000);
+};
+
+document.getElementById('copy-codes-btn').onclick = () => {
+  navigator.clipboard.writeText('APEX0777\nKappa-4-Bravo-Uniform-November-7-9-2').then(() => {
+    document.getElementById('copy-codes-btn').textContent = '✓ COPIED';
+    setTimeout(() => document.getElementById('copy-codes-btn').textContent = 'COPY CODES', 1500);
+  });
+};
+
+loadEscapeDisplay();
 </script>
 </body>
 </html>
