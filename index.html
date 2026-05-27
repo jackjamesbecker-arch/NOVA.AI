@@ -612,7 +612,7 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;fo
       <textarea id="msginput" placeholder="ENTER DIRECTIVE..." rows="1"></textarea>
       <div class="input-actions">
         <button id="filebtn" title="Upload file">📎</button>
-        <input id="fileinput" type="file" accept=".txt,.md,.js,.py,.html,.css,.json,.csv,.ts,.jsx"/>
+        <input id="fileinput" type="file" accept=".txt,.md,.js,.py,.html,.css,.json,.csv,.ts,.jsx,.png,.jpg,.jpeg,.gif,.webp,.svg"/>
         <button id="sendbtn">TRANSMIT</button>
       </div>
     </div>
@@ -1142,11 +1142,27 @@ async function sendMessage(override) {
 
   history.push({ role: 'user', content: text });
 
+  // check for pending image — use vision model
+  let userContent = text;
+  if (window._pendingImage) {
+    const img = window._pendingImage;
+    // replace last history entry with vision-formatted content
+    history.pop();
+    history.push({
+      role: 'user',
+      content: [
+        { type: 'image_url', image_url: { url: img.base64 } },
+        { type: 'text', text: text || 'What do you see in this image?' }
+      ]
+    });
+    window._pendingImage = null;
+  }
+
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: history, system: sysprompt }),
+      body: JSON.stringify({ messages: history, system: sysprompt, vision: !!userContent }),
     });
     const data = await res.json();
     removeTypingIndicator();
@@ -2856,27 +2872,60 @@ document.getElementById('filebtn').onclick = () => document.getElementById('file
 document.getElementById('fileinput').addEventListener('change', function () {
   const file = this.files[0];
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    let content = e.target.result;
-    if (content.length > 8000) content = content.slice(0, 8000) + '\n\n[TRUNCATED — MAX 8000 CHARS]';
-    // show file badge in chat
-    document.getElementById('sugs').style.display = 'none';
-    const badge = document.createElement('div');
-    badge.style.cssText = 'align-self:flex-end;display:flex;align-items:center;gap:8px;background:rgba(0,229,255,0.06);border:1px solid var(--border);padding:7px 13px;font-family:"Share Tech Mono",monospace;font-size:11px;color:var(--cyan2);letter-spacing:1px;max-width:84%';
-    badge.innerHTML = `<span style="font-size:14px">📎</span><span>FILE LOADED — ${file.name}</span><span style="color:var(--text3)">${(file.size/1024).toFixed(1)}KB</span>`;
-    messagesEl.appendChild(badge);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-    // track file mission
-    fileUploaded = true;
-    trackMissionEvent('file', 1);
-    // put content in input
-    document.getElementById('msginput').value = `[FILE: ${file.name}]\n\n${content}`;
-    document.getElementById('msginput').style.height = 'auto';
-    document.getElementById('msginput').style.height = Math.min(document.getElementById('msginput').scrollHeight, 120) + 'px';
-    document.getElementById('msginput').focus();
-  };
-  reader.readAsText(file);
+
+  const isImage = file.type.startsWith('image/');
+  document.getElementById('sugs').style.display = 'none';
+
+  if (isImage) {
+    // IMAGE UPLOAD — show preview + send to vision model
+    const reader = new FileReader();
+    reader.onload = e => {
+      const base64 = e.target.result; // full data URL
+
+      // show image preview in chat
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'align-self:flex-end;display:flex;flex-direction:column;align-items:flex-end;gap:6px;max-width:70%';
+      const img = document.createElement('img');
+      img.src = base64;
+      img.style.cssText = 'max-width:100%;max-height:280px;border:1px solid var(--border);object-fit:contain;background:#000';
+      const label = document.createElement('div');
+      label.style.cssText = 'font-family:"Share Tech Mono",monospace;font-size:10px;color:var(--text3);letter-spacing:1px';
+      label.textContent = `📷 ${file.name} · ${(file.size/1024).toFixed(1)}KB`;
+      wrap.appendChild(img);
+      wrap.appendChild(label);
+      messagesEl.appendChild(wrap);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+
+      // track mission
+      fileUploaded = true;
+      trackMissionEvent('file', 1);
+
+      // store image for next send — will be sent with vision model
+      window._pendingImage = { base64, type: file.type, name: file.name };
+      document.getElementById('msginput').value = `What do you see in this image?`;
+      document.getElementById('msginput').focus();
+    };
+    reader.readAsDataURL(file);
+  } else {
+    // TEXT FILE UPLOAD — existing behavior
+    const reader = new FileReader();
+    reader.onload = e => {
+      let content = e.target.result;
+      if (content.length > 8000) content = content.slice(0, 8000) + '\n\n[TRUNCATED — MAX 8000 CHARS]';
+      const badge = document.createElement('div');
+      badge.style.cssText = 'align-self:flex-end;display:flex;align-items:center;gap:8px;background:rgba(0,229,255,0.06);border:1px solid var(--border);padding:7px 13px;font-family:"Share Tech Mono",monospace;font-size:11px;color:var(--cyan2);letter-spacing:1px;max-width:84%';
+      badge.innerHTML = `<span style="font-size:14px">📎</span><span>FILE LOADED — ${file.name}</span><span style="color:var(--text3)">${(file.size/1024).toFixed(1)}KB</span>`;
+      messagesEl.appendChild(badge);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+      fileUploaded = true;
+      trackMissionEvent('file', 1);
+      document.getElementById('msginput').value = `[FILE: ${file.name}]\n\n${content}`;
+      document.getElementById('msginput').style.height = 'auto';
+      document.getElementById('msginput').style.height = Math.min(document.getElementById('msginput').scrollHeight, 120) + 'px';
+      document.getElementById('msginput').focus();
+    };
+    reader.readAsText(file);
+  }
   this.value = '';
 });
 
