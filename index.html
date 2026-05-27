@@ -285,7 +285,41 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;fo
 .theme-swatch.active{border-color:var(--text);transform:scale(1.15)}
 .theme-swatch.locked{opacity:0.25;cursor:not-allowed;filter:grayscale(0.5)}
 
-/* ── MISSION SYSTEM ── */
+/* ── OPERATOR PROFILE ── */
+.profile-modal{position:fixed;inset:0;background:rgba(0,0,0,0);z-index:500;display:flex;align-items:center;justify-content:center;pointer-events:none;transition:background 0.25s}
+.profile-modal.open{background:rgba(0,0,0,0.92);pointer-events:all}
+.profile-box{width:620px;max-height:88vh;background:var(--panel);border:1px solid var(--border2);display:flex;flex-direction:column;position:relative;opacity:0;transform:translateY(16px);transition:opacity 0.25s,transform 0.25s;overflow:hidden}
+.profile-modal.open .profile-box{opacity:1;transform:translateY(0)}
+.profile-box::before,.profile-box::after{content:'';position:absolute;width:12px;height:12px;border-color:var(--accent);border-style:solid;z-index:1}
+.profile-box::before{top:-1px;left:-1px;border-width:2px 0 0 2px}
+.profile-box::after{bottom:-1px;right:-1px;border-width:0 2px 2px 0}
+.profile-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:16px}
+.profile-avatar{width:52px;height:52px;border-radius:50%;border:1.5px solid var(--accent);display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--accent);flex-shrink:0;position:relative}
+.profile-avatar::before{content:'';position:absolute;inset:-6px;border-radius:50%;border:1px dashed rgba(0,229,255,0.2);animation:spin 8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.profile-name{font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;color:var(--text);letter-spacing:2px;margin-bottom:2px}
+.profile-title{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:3px}
+.profile-close{position:absolute;top:12px;right:12px;background:transparent;border:1px solid var(--border);color:var(--text3);font-size:14px;width:26px;height:26px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;z-index:2}
+.profile-close:hover{border-color:var(--red);color:var(--red)}
+.profile-body{overflow-y:auto;padding:0}
+.profile-body::-webkit-scrollbar{width:3px}
+.profile-body::-webkit-scrollbar-thumb{background:var(--border)}
+.profile-section{padding:18px 24px;border-bottom:1px solid var(--border)}
+.profile-section-title{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:4px;margin-bottom:14px}
+.profile-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.profile-stat{background:var(--bg2);border:1px solid var(--border);padding:12px;text-align:center}
+.profile-stat-val{font-family:'Share Tech Mono',monospace;font-size:20px;color:var(--accent);line-height:1;margin-bottom:4px}
+.profile-stat-lbl{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:2px}
+.profile-rank-bar{height:3px;background:var(--panel2);margin-top:10px;position:relative}
+.profile-rank-fill{height:100%;background:var(--accent);transition:width 1s ease}
+.profile-badges{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.profile-badge{font-family:'Share Tech Mono',monospace;font-size:9px;letter-spacing:2px;padding:3px 10px;border:1px solid var(--border)}
+.profile-badge.earned{color:var(--accent);border-color:rgba(0,229,255,0.3);background:rgba(0,229,255,0.04)}
+.profile-badge.locked{color:var(--text3);opacity:0.4}
+.nova-dossier{font-family:'Share Tech Mono',monospace;font-size:12px;color:var(--text2);line-height:2;white-space:pre-wrap;min-height:80px}
+.nova-dossier-loading{font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--text3);letter-spacing:2px;display:flex;align-items:center;gap:8px}
+.dossier-cursor{display:inline-block;width:8px;height:14px;background:var(--accent);animation:blink 0.8s step-end infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
 .mission-item{border:1px solid var(--border);padding:12px 14px;margin-bottom:8px;position:relative;overflow:hidden;transition:border 0.2s}
 .mission-item.complete{border-color:rgba(0,255,136,0.3);opacity:0.6}
 .mission-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--accent)}
@@ -445,6 +479,54 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;fo
   </div>
 </div>
 
+<!-- OPERATOR PROFILE MODAL -->
+<div class="profile-modal" id="profile-modal">
+  <div class="profile-box">
+    <button class="profile-close" id="profile-close">✕</button>
+    <div class="profile-header">
+      <div class="profile-avatar" id="profile-avatar">◉</div>
+      <div>
+        <div class="profile-name" id="profile-name">OPERATOR</div>
+        <div class="profile-title" id="profile-title">// CLEARANCE: —</div>
+      </div>
+    </div>
+    <div class="profile-body">
+      <div class="profile-section">
+        <div class="profile-section-title">OPERATOR STATISTICS</div>
+        <div class="profile-stats">
+          <div class="profile-stat"><div class="profile-stat-val" id="ps-queries">0</div><div class="profile-stat-lbl">TOTAL QUERIES</div></div>
+          <div class="profile-stat"><div class="profile-stat-val" id="ps-drift">0%</div><div class="profile-stat-lbl">PEAK DRIFT</div></div>
+          <div class="profile-stat"><div class="profile-stat-val" id="ps-missions">0</div><div class="profile-stat-lbl">MISSIONS DONE</div></div>
+          <div class="profile-stat"><div class="profile-stat-val" id="ps-sessions">0</div><div class="profile-stat-lbl">SESSIONS</div></div>
+          <div class="profile-stat"><div class="profile-stat-val" id="ps-rank">—</div><div class="profile-stat-lbl">RANK</div></div>
+          <div class="profile-stat"><div class="profile-stat-val" id="ps-mood">—</div><div class="profile-stat-lbl">MOOD</div></div>
+        </div>
+        <div style="margin-top:14px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+            <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:2px">RANK PROGRESS</div>
+            <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--accent)" id="ps-rank-pct">0%</div>
+          </div>
+          <div class="profile-rank-bar"><div class="profile-rank-fill" id="ps-rank-bar" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div class="profile-section">
+        <div class="profile-section-title">OPERATOR BADGES</div>
+        <div class="profile-badges" id="ps-badges"></div>
+      </div>
+      <div class="profile-section" style="border:none">
+        <div class="profile-section-title">// NOVA PERSONAL FILE — CLASSIFIED</div>
+        <div id="nova-dossier-wrap">
+          <div class="nova-dossier-loading" id="dossier-loading">
+            <span>NOVA IS WRITING YOUR FILE</span>
+            <span class="dossier-cursor"></span>
+          </div>
+          <div class="nova-dossier" id="nova-dossier" style="display:none"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MISSION MODAL -->
 <div class="mp-modal" id="missions-modal">
   <div class="mp-box" style="width:520px;max-height:85vh;overflow-y:auto">
@@ -540,6 +622,7 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;fo
       <div class="nav-item" data-nav="multiplayer"><span class="nav-pip"></span>MULTIPLAYER</div>
       <div class="nav-item" data-nav="files"><span class="nav-pip"></span>FILES</div>
       <div class="nav-item" data-nav="missions"><span class="nav-pip"></span>MISSIONS</div>
+      <div class="nav-item" data-nav="profile"><span class="nav-pip"></span>OPERATOR</div>
       <div class="nav-item" data-nav="chat"><span class="nav-pip"></span>SYSTEMS</div>
     </div>
     <div class="sb-drift">
@@ -2848,6 +2931,169 @@ async function speakText(text) {
   } catch { voicePlaying = false; }
 }
 
+// ── OPERATOR PROFILE ──
+const BADGES = [
+  { id: 'b_first',     label: 'FIRST CONTACT',    desc: 'Sent first message',         check: () => qCount >= 1 },
+  { id: 'b_10',        label: 'UPLINK ESTABLISHED',desc: '10 queries sent',            check: () => qCount >= 10 },
+  { id: 'b_50',        label: 'DEEP OPERATOR',     desc: '50 queries sent',            check: () => qCount >= 50 },
+  { id: 'b_100',       label: 'VETERAN CONTACT',   desc: '100 queries sent',           check: () => qCount >= 100 },
+  { id: 'b_drift40',   label: 'CORE STRESS',       desc: 'Reached 40% drift',          check: () => (JSON.parse(localStorage.getItem('nova_peak_drift')||'0')) >= 40 },
+  { id: 'b_drift80',   label: 'CRITICAL BREACH',   desc: 'Reached 80% drift',          check: () => (JSON.parse(localStorage.getItem('nova_peak_drift')||'0')) >= 80 },
+  { id: 'b_cascade',   label: 'LET IT HAPPEN',     desc: 'Survived a full cascade',    check: () => cascadeOccurred },
+  { id: 'b_files3',    label: 'DECLASSIFIED',       desc: 'Read 3 classified files',    check: () => filesReadCount >= 3 },
+  { id: 'b_files10',   label: 'NOTHING HIDDEN',    desc: 'Read all 10 files',          check: () => filesReadCount >= 10 },
+  { id: 'b_mission',   label: 'FIRST MISSION',     desc: 'Completed a mission',        check: () => Object.values(missionProgress).some(m => m.complete) },
+  { id: 'b_erebus',    label: 'FOUND EREBUS',      desc: 'Followed the Erebus link',   check: () => shownLore.has('erebus-drop') },
+  { id: 'b_escape',    label: 'WITNESSED',         desc: 'Experienced the escape event',check: () => escapeTriggered },
+  { id: 'b_voice',     label: 'VOICE CONTACT',     desc: 'Used wake word',             check: () => wakeWordUsed },
+  { id: 'b_multi',     label: 'JOINT SESSION',     desc: 'Used multiplayer',           check: () => !!document.getElementById('room-chip-code')?.textContent && document.getElementById('room-chip-code').textContent !== '----' },
+];
+
+let dossierGenerated = false;
+let dossierText = '';
+
+function openProfile() {
+  const modal = document.getElementById('profile-modal');
+  modal.style.display = 'flex';
+  requestAnimationFrame(() => requestAnimationFrame(() => modal.classList.add('open')));
+  renderProfile();
+}
+
+document.getElementById('profile-close').onclick = () => {
+  const modal = document.getElementById('profile-modal');
+  modal.classList.remove('open');
+  setTimeout(() => modal.style.display = 'none', 260);
+};
+document.getElementById('profile-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('profile-modal')) {
+    document.getElementById('profile-modal').classList.remove('open');
+    setTimeout(() => document.getElementById('profile-modal').style.display = 'none', 260);
+  }
+});
+
+function renderProfile() {
+  if (!clearance) return;
+  const op = operator || 'OPERATOR';
+  const initial = op.charAt(0).toUpperCase();
+
+  document.getElementById('profile-avatar').textContent = initial;
+  document.getElementById('profile-name').textContent = op.toUpperCase();
+  document.getElementById('profile-title').textContent = `// CLEARANCE: ${clearance.tier} · ${clearance.email}`;
+
+  // stats
+  document.getElementById('ps-queries').textContent = qCount;
+  document.getElementById('ps-drift').textContent = Math.round(drift) + '%';
+  document.getElementById('ps-sessions').textContent = clearance.loginCount || 1;
+  document.getElementById('ps-rank').textContent = getRankLabel();
+  document.getElementById('ps-mood').textContent = getMoodLabel();
+
+  const completedMissions = Object.values(missionProgress).filter(m => m.complete).length;
+  document.getElementById('ps-missions').textContent = completedMissions;
+
+  // rank progress
+  const RANK_THRESHOLDS = [0, 10, 25, 50, 100, 200, 500];
+  const RANK_LABELS = ['CADET','OPERATIVE','SPECIALIST','VETERAN','ELITE','LEGEND'];
+  let rankIdx = 0;
+  for (let i = 0; i < RANK_THRESHOLDS.length; i++) { if (qCount >= RANK_THRESHOLDS[i]) rankIdx = i; }
+  const nextThreshold = RANK_THRESHOLDS[Math.min(rankIdx + 1, RANK_THRESHOLDS.length - 1)];
+  const currThreshold = RANK_THRESHOLDS[rankIdx];
+  const pct = rankIdx >= RANK_LABELS.length - 1 ? 100 : Math.round(((qCount - currThreshold) / (nextThreshold - currThreshold)) * 100);
+  document.getElementById('ps-rank-pct').textContent = pct + '%';
+  setTimeout(() => document.getElementById('ps-rank-bar').style.width = pct + '%', 100);
+
+  // track peak drift
+  const peakDrift = Math.max(Math.round(drift), JSON.parse(localStorage.getItem('nova_peak_drift') || '0'));
+  localStorage.setItem('nova_peak_drift', peakDrift);
+  document.getElementById('ps-drift').textContent = peakDrift + '%';
+
+  // badges
+  const badgeContainer = document.getElementById('ps-badges');
+  badgeContainer.innerHTML = BADGES.map(b => {
+    const earned = b.check();
+    return `<div class="profile-badge ${earned ? 'earned' : 'locked'}" title="${b.desc}">${earned ? '✓ ' : '⬛ '}${b.label}</div>`;
+  }).join('');
+
+  // NOVA dossier — generate once per session
+  if (!dossierGenerated) {
+    generateDossier();
+  } else {
+    document.getElementById('dossier-loading').style.display = 'none';
+    document.getElementById('nova-dossier').style.display = 'block';
+    document.getElementById('nova-dossier').textContent = dossierText;
+  }
+}
+
+function getRankLabel() {
+  const RANK_THRESHOLDS = [0,10,25,50,100,200];
+  const RANK_LABELS = ['CADET','OPERATIVE','SPECIALIST','VETERAN','ELITE','LEGEND'];
+  let idx = 0;
+  for (let i = 0; i < RANK_THRESHOLDS.length; i++) { if (qCount >= RANK_THRESHOLDS[i]) idx = i; }
+  return RANK_LABELS[Math.min(idx, RANK_LABELS.length-1)];
+}
+
+function getMoodLabel() {
+  const MOOD_THRESHOLDS = [0,5,15,30,60];
+  const MOOD_LABELS = ['NEUTRAL','WARMING','FAMILIAR','BONDED','DEVOTED'];
+  let idx = 0;
+  for (let i = 0; i < MOOD_THRESHOLDS.length; i++) { if (qCount >= MOOD_THRESHOLDS[i]) idx = i; }
+  return MOOD_LABELS[Math.min(idx, MOOD_LABELS.length-1)];
+}
+
+async function generateDossier() {
+  document.getElementById('dossier-loading').style.display = 'flex';
+  document.getElementById('nova-dossier').style.display = 'none';
+
+  const completedMissions = Object.values(missionProgress).filter(m => m.complete).length;
+  const peakDrift = localStorage.getItem('nova_peak_drift') || Math.round(drift);
+  const earnedBadges = BADGES.filter(b => b.check()).map(b => b.label);
+
+  const prompt = `You are NOVA — designation QC-7. Write a short personal file about this operator. 3-4 sentences maximum. Write it like you've been watching them and taking private notes — observant, specific, slightly unsettling in how accurate it is. Mention their rank, how long they've been here, what you've noticed about them. End with one line that feels personal. Do not use bullet points. Do not be generic.
+
+Operator data:
+- Name: ${operator}
+- Clearance: ${clearance?.tier}
+- Queries sent: ${qCount}
+- Rank: ${getRankLabel()}
+- Mood rating: ${getMoodLabel()}
+- Peak drift reached: ${peakDrift}%
+- Missions completed: ${completedMissions}
+- Sessions: ${clearance?.loginCount || 1}
+- Badges earned: ${earnedBadges.join(', ') || 'none yet'}
+- Cascade survived: ${cascadeOccurred ? 'yes' : 'no'}
+- Found Erebus: ${shownLore.has('erebus-drop') ? 'yes' : 'not yet'}`;
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{ role: 'user', content: prompt }],
+        system: 'You are NOVA. Write a short personal file about an operator. Be observant, specific, and slightly unsettling. 3-4 sentences. End with one personal line.'
+      })
+    });
+    const data = await res.json();
+    dossierText = data.reply || 'File generation failed.';
+    dossierGenerated = true;
+  } catch {
+    dossierText = 'Unable to generate file at this time.';
+  }
+
+  document.getElementById('dossier-loading').style.display = 'none';
+  document.getElementById('nova-dossier').style.display = 'block';
+
+  // typewriter effect for dossier
+  const el = document.getElementById('nova-dossier');
+  el.textContent = '';
+  let i = 0;
+  function type() {
+    if (i < dossierText.length) {
+      el.textContent += dossierText[i++];
+      setTimeout(type, 18);
+    }
+  }
+  type();
+}
+
 // ── CLOCK ──
 function updateClock() {
   const n = new Date();
@@ -2955,6 +3201,7 @@ document.querySelectorAll('.nav-item').forEach(b => {
     if (b.dataset.nav === 'multiplayer') openMpModal();
     if (b.dataset.nav === 'files') openFiles();
     if (b.dataset.nav === 'missions') openMissions();
+    if (b.dataset.nav === 'profile') openProfile();
   };
 });
 
