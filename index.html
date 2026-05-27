@@ -1138,7 +1138,7 @@ async function sendMessage(override) {
   const driftLevel = getDriftLevel();
   const driftNote = DRIFT_SYSTEM[driftLevel];
   const modeNote = MODE_PROMPTS[activeMode] || '';
-  const sysprompt = `You are NOVA — a sophisticated APEX-class AI assistant, designation QC-7. ${driftNote} Current operating mode: ${activeMode}. ${modeNote} You are assisting operator ${operator}. Keep responses focused and impactful. Current quantum drift level: ${Math.round(drift)}%.`;
+  const sysprompt = `${driftNote} Current operating mode: ${activeMode}. ${modeNote} You are speaking with operator ${operator}. Current quantum drift level: ${Math.round(drift)}%. Remember: you are NOVA. Stay in character completely.`;
 
   history.push({ role: 'user', content: text });
 
