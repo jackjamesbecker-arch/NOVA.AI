@@ -102,7 +102,7 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           model: 'llama-3.3-70b-versatile',
           messages: [
-            { role: 'system', content: system || NOVA_SYSTEM },
+            { role: 'system', content: NOVA_SYSTEM + '\n\n' + (system || '') },
             { role: 'user', content: `An operator has shown me an image. It contains:\n\n${imageDescription}\n\nOperator's message: ${userQuestion || '(no message, just the image)'}` },
           ],
           max_tokens: 300,
@@ -119,7 +119,7 @@ export default async function handler(req, res) {
         body: JSON.stringify({
           model: 'llama-3.3-70b-versatile',
           messages: [
-            { role: 'system', content: system || NOVA_SYSTEM },
+            { role: 'system', content: NOVA_SYSTEM + '\n\n' + (system || '') },
             ...messages,
           ],
           max_tokens: 1024,
