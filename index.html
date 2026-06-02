@@ -833,9 +833,14 @@ async function checkDowntime() {
   } catch {}
 }
 
-// check on load and every 60 seconds
+// check on load and every 5 seconds
 checkDowntime();
-setInterval(checkDowntime, 60000);
+setInterval(checkDowntime, 5000);
+
+// also check when tab becomes visible again
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) checkDowntime();
+});
 
 // ── SERVICE WORKER ──
 if ('serviceWorker' in navigator) {
