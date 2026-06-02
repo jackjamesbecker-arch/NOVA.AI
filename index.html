@@ -285,7 +285,13 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;fo
 .theme-swatch.active{border-color:var(--text);transform:scale(1.15)}
 .theme-swatch.locked{opacity:0.25;cursor:not-allowed;filter:grayscale(0.5)}
 
-/* ── OPERATOR PROFILE ── */
+/* ── DOWNTIME BANNER ── */
+#downtime-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:9998;background:#7a5000;border-bottom:1px solid #ffaa00;padding:10px 20px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:12px;color:#ffdd99;letter-spacing:2px}
+#downtime-banner.active{display:block}
+#downtime-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9997;align-items:center;justify-content:center;flex-direction:column;gap:16px;font-family:'Share Tech Mono',monospace;text-align:center}
+#downtime-overlay.active{display:flex}
+.dt-title{font-size:18px;color:#ffaa00;letter-spacing:4px}
+.dt-msg{font-size:13px;color:#888;letter-spacing:2px;max-width:500px;line-height:2}
 .profile-modal{position:fixed;inset:0;background:rgba(0,0,0,0);z-index:500;display:flex;align-items:center;justify-content:center;pointer-events:none;transition:background 0.25s}
 .profile-modal.open{background:rgba(0,0,0,0.92);pointer-events:all}
 .profile-box{width:620px;max-height:88vh;background:var(--panel);border:1px solid var(--border2);display:flex;flex-direction:column;position:relative;opacity:0;transform:translateY(16px);transition:opacity 0.25s,transform 0.25s;overflow:hidden}
@@ -546,6 +552,16 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;fo
   </div>
 </div>
 
+<!-- DOWNTIME BANNER -->
+<div id="downtime-banner">⚠ <span id="downtime-banner-msg">SCHEDULED MAINTENANCE</span></div>
+
+<!-- DOWNTIME OVERLAY -->
+<div id="downtime-overlay">
+  <div class="dt-title">⚠ SYSTEM DOWNTIME</div>
+  <div class="dt-msg" id="downtime-overlay-msg">NOVA QC-7 is currently undergoing scheduled maintenance. Please check back shortly.</div>
+  <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:#555;letter-spacing:2px;margin-top:8px">// APEX INTELLIGENCE DIVISION</div>
+</div>
+
 <!-- ESCAPE EVENT SCREEN -->
 <div id="escape-screen">
   <div id="escape-text"></div>
@@ -792,6 +808,34 @@ let history = [];
 let typing = false;
 let cooldownActive = false;
 let cooldownUntil = null;
+
+// ── DOWNTIME CHECK ──
+async function checkDowntime() {
+  try {
+    const res = await fetch('/api/downtime', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get' })
+    });
+    const data = await res.json();
+    if (data.active) {
+      const msg = data.message || 'NOVA QC-7 is currently undergoing scheduled maintenance.';
+      document.getElementById('downtime-banner-msg').textContent = msg;
+      document.getElementById('downtime-overlay-msg').textContent = msg;
+      document.getElementById('downtime-banner').classList.add('active');
+      // only show full overlay if not logged in
+      if (!clearance) {
+        document.getElementById('downtime-overlay').classList.add('active');
+      }
+    } else {
+      document.getElementById('downtime-banner').classList.remove('active');
+      document.getElementById('downtime-overlay').classList.remove('active');
+    }
+  } catch {}
+}
+
+// check on load and every 60 seconds
+checkDowntime();
+setInterval(checkDowntime, 60000);
 
 // ── SERVICE WORKER ──
 if ('serviceWorker' in navigator) {

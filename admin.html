@@ -141,6 +141,30 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
     </div>
   </div>
 
+  <!-- DOWNTIME PANEL -->
+  <div class="panel" style="margin-top:20px">
+    <div class="panel-title">// DOWNTIME CONTROL</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+      <div>
+        <div class="field-label" style="margin-bottom:8px">DOWNTIME MESSAGE</div>
+        <textarea id="downtime-msg" placeholder="e.g. Scheduled maintenance — back in 30 minutes" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:12px;padding:10px;resize:none;height:80px;outline:none"></textarea>
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button class="btn" id="downtime-on-btn" style="background:rgba(255,170,0,0.15);border-color:rgba(255,170,0,0.4);color:rgba(255,170,0,0.9)">⚠ ENABLE DOWNTIME</button>
+          <button class="btn" id="downtime-off-btn" style="background:rgba(0,255,136,0.08);border-color:rgba(0,255,136,0.3);color:rgba(0,255,136,0.8)">✓ DISABLE DOWNTIME</button>
+        </div>
+      </div>
+      <div>
+        <div class="field-label" style="margin-bottom:8px">CURRENT STATUS</div>
+        <div style="background:var(--bg2);border:1px solid var(--border);padding:14px;font-family:'Share Tech Mono',monospace;font-size:11px;line-height:2">
+          <div>STATUS: <span id="downtime-status" style="color:var(--green)">OPERATIONAL</span></div>
+          <div>MESSAGE: <span id="downtime-msg-display" style="color:var(--text3)">—</span></div>
+          <div>UPDATED: <span id="downtime-updated" style="color:var(--text3)">—</span></div>
+        </div>
+      </div>
+    </div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--green);margin-top:10px;min-height:16px" id="downtime-result"></div>
+  </div>
+
   <!-- OPERATOR DASHBOARD -->
   <div class="panel">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
@@ -367,6 +391,48 @@ document.getElementById('copy-codes-btn').onclick = () => {
     setTimeout(() => document.getElementById('copy-codes-btn').textContent = 'COPY CODES', 1500);
   });
 };
+
+// ── DOWNTIME ──
+async function loadDowntimeStatus() {
+  try {
+    const res = await fetch('/api/downtime', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get' })
+    });
+    const data = await res.json();
+    document.getElementById('downtime-status').textContent = data.active ? 'DOWNTIME ACTIVE' : 'OPERATIONAL';
+    document.getElementById('downtime-status').style.color = data.active ? 'var(--amber)' : 'var(--green)';
+    document.getElementById('downtime-msg-display').textContent = data.message || '—';
+    document.getElementById('downtime-updated').textContent = data.updatedAt ? new Date(data.updatedAt).toLocaleString() : '—';
+    if (data.message) document.getElementById('downtime-msg').value = data.message;
+  } catch {}
+}
+
+async function setDowntime(active) {
+  const msg = document.getElementById('downtime-msg').value.trim();
+  if (active && !msg) { alert('Please enter a downtime message first.'); return; }
+  const result = document.getElementById('downtime-result');
+  try {
+    const res = await fetch('/api/downtime', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'set', adminSecret, active, message: msg })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      result.textContent = active ? '⚠ DOWNTIME ENABLED — Operators will see your message' : '✓ DOWNTIME DISABLED — System operational';
+      result.style.color = active ? 'var(--amber)' : 'var(--green)';
+      loadDowntimeStatus();
+      setTimeout(() => result.textContent = '', 4000);
+    }
+  } catch(e) {
+    result.textContent = '⚠ Failed — ' + e.message;
+    result.style.color = 'var(--red)';
+  }
+}
+
+document.getElementById('downtime-on-btn').onclick = () => setDowntime(true);
+document.getElementById('downtime-off-btn').onclick = () => setDowntime(false);
+loadDowntimeStatus();
 
 loadEscapeDisplay();
 </script>
