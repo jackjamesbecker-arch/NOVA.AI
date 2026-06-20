@@ -12,14 +12,19 @@ export default async function handler(req, res) {
   });
 
   const data = await r.json();
-  if (!data.result) return res.status(200).json({ history: [], drift: 0 });
+  if (!data.result) return res.status(200).json({ history: [], drift: 0, creditsUsedToday: 0, creditsDate: '' });
 
   try {
     const parsed = JSON.parse(decodeURIComponent(data.result));
     // support both old format (array) and new format (object)
-    if (Array.isArray(parsed)) return res.status(200).json({ history: parsed, drift: 0 });
-    return res.status(200).json({ history: parsed.history || [], drift: parsed.drift || 0 });
+    if (Array.isArray(parsed)) return res.status(200).json({ history: parsed, drift: 0, creditsUsedToday: 0, creditsDate: '' });
+    return res.status(200).json({
+      history: parsed.history || [],
+      drift: parsed.drift || 0,
+      creditsUsedToday: parsed.creditsUsedToday || 0,
+      creditsDate: parsed.creditsDate || '',
+    });
   } catch {
-    return res.status(200).json({ history: [], drift: 0 });
+    return res.status(200).json({ history: [], drift: 0, creditsUsedToday: 0, creditsDate: '' });
   }
 }
