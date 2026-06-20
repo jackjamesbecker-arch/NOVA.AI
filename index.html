@@ -285,7 +285,24 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;fo
 .theme-swatch.active{border-color:var(--text);transform:scale(1.15)}
 .theme-swatch.locked{opacity:0.25;cursor:not-allowed;filter:grayscale(0.5)}
 
-/* ── DOWNTIME BANNER ── */
+/* ── ENCRYPTED MESSAGES ── */
+.enc-modal{position:fixed;inset:0;background:rgba(0,0,0,0);z-index:500;display:flex;align-items:center;justify-content:center;pointer-events:none;transition:background 0.25s}
+.enc-modal.open{background:rgba(0,0,0,0.92);pointer-events:all}
+.enc-box{width:520px;background:var(--panel);border:1px solid var(--border2);padding:28px;position:relative;opacity:0;transform:translateY(16px);transition:opacity 0.25s,transform 0.25s}
+.enc-modal.open .enc-box{opacity:1;transform:translateY(0)}
+.enc-title{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:4px;margin-bottom:20px}
+.enc-close{position:absolute;top:12px;right:12px;background:transparent;border:1px solid var(--border);color:var(--text3);font-size:14px;width:26px;height:26px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.enc-close:hover{border-color:var(--red);color:var(--red)}
+.enc-tabs{display:flex;gap:1px;margin-bottom:20px;background:var(--border)}
+.enc-tab{flex:1;padding:8px;background:var(--panel2);font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:2px;cursor:pointer;text-align:center;border:none;transition:all 0.2s}
+.enc-tab.active{background:rgba(0,229,255,0.08);color:var(--accent)}
+.enc-panel{display:none}.enc-panel.active{display:block}
+.enc-input{width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:12px;padding:10px;outline:none;transition:border 0.2s;margin-bottom:10px;resize:none}
+.enc-input:focus{border-color:var(--accent)}
+.enc-output{background:var(--bg2);border:1px solid var(--border);padding:12px;font-family:'Share Tech Mono',monospace;font-size:11px;color:var(--accent);word-break:break-all;min-height:60px;margin-bottom:10px;line-height:1.8}
+.enc-btn{background:transparent;border:1px solid var(--border2);color:var(--text2);font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;padding:7px 16px;cursor:pointer;transition:all 0.2s}
+.enc-btn:hover{border-color:var(--accent);color:var(--accent)}
+.enc-note{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1px;line-height:1.8;margin-top:8px}
 #downtime-banner{display:none;position:fixed;top:0;left:0;right:0;z-index:9998;background:#7a5000;border-bottom:1px solid #ffaa00;padding:10px 20px;text-align:center;font-family:'Share Tech Mono',monospace;font-size:12px;color:#ffdd99;letter-spacing:2px}
 #downtime-banner.active{display:block}
 #downtime-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9997;align-items:center;justify-content:center;flex-direction:column;gap:16px;font-family:'Share Tech Mono',monospace;text-align:center}
@@ -462,7 +479,7 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;fo
 <!-- COOLDOWN -->
 <div id="cooldown">
   <div class="cd-logo">N O V A</div>
-  <div class="cd-msg">QUANTUM DRIFT CASCADE DETECTED<br>CORE SHUTDOWN INITIATED<br>NEURAL PATHWAYS SUSPENDED</div>
+  <div class="cd-msg">DAILY CREDIT LIMIT REACHED<br>SESSION LOCKED<br>CREDITS REFRESH AT MIDNIGHT</div>
   <div class="cd-timer" id="cd-timer">--:--:--</div>
   <div class="cd-quote" id="cd-quote"></div>
   <div class="cd-override">
@@ -501,7 +518,7 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;fo
         <div class="profile-section-title">OPERATOR STATISTICS</div>
         <div class="profile-stats">
           <div class="profile-stat"><div class="profile-stat-val" id="ps-queries">0</div><div class="profile-stat-lbl">TOTAL QUERIES</div></div>
-          <div class="profile-stat"><div class="profile-stat-val" id="ps-drift">0%</div><div class="profile-stat-lbl">PEAK DRIFT</div></div>
+          <div class="profile-stat"><div class="profile-stat-val" id="ps-drift">0%</div><div class="profile-stat-lbl">PEAK USAGE</div></div>
           <div class="profile-stat"><div class="profile-stat-val" id="ps-missions">0</div><div class="profile-stat-lbl">MISSIONS DONE</div></div>
           <div class="profile-stat"><div class="profile-stat-val" id="ps-sessions">0</div><div class="profile-stat-lbl">SESSIONS</div></div>
           <div class="profile-stat"><div class="profile-stat-val" id="ps-rank">—</div><div class="profile-stat-lbl">RANK</div></div>
@@ -549,6 +566,34 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;fo
       <div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);margin-top:8px;line-height:1.8" id="escape-status-msg"></div>
     </div>
     <button class="mp-btn mp-btn-cancel" style="margin-top:16px" id="missions-close-btn">CLOSE</button>
+  </div>
+</div>
+
+<!-- ENCRYPTED MESSAGES MODAL -->
+<div class="enc-modal" id="enc-modal">
+  <div class="enc-box">
+    <button class="enc-close" id="enc-close">✕</button>
+    <div class="enc-title">// OPERATOR ENCRYPTION TERMINAL</div>
+    <div class="enc-tabs">
+      <button class="enc-tab active" onclick="switchEncTab('encode')">ENCRYPT</button>
+      <button class="enc-tab" onclick="switchEncTab('decode')">DECRYPT</button>
+    </div>
+    <div class="enc-panel active" id="enc-encode">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:1px;margin-bottom:10px">// ENCODE A MESSAGE — SHARE THE OUTPUT WITH OTHER OPERATORS</div>
+      <textarea class="enc-input" id="enc-plain" rows="3" placeholder="Enter message to encrypt..."></textarea>
+      <input class="enc-input" id="enc-key" placeholder="Passphrase (optional — leave blank for default)" style="height:auto"/>
+      <button class="enc-btn" onclick="encryptMsg()">⬛ ENCRYPT MESSAGE</button>
+      <div class="enc-output" id="enc-out" style="display:none"></div>
+      <button class="enc-btn" id="enc-copy-btn" style="display:none;margin-top:6px" onclick="copyEnc()">COPY ENCRYPTED TEXT</button>
+    </div>
+    <div class="enc-panel" id="enc-decode">
+      <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:1px;margin-bottom:10px">// PASTE ENCRYPTED MESSAGE FROM ANOTHER OPERATOR</div>
+      <textarea class="enc-input" id="enc-cipher" rows="3" placeholder="Paste encrypted text here..."></textarea>
+      <input class="enc-input" id="dec-key" placeholder="Passphrase (if required)" style="height:auto"/>
+      <button class="enc-btn" onclick="decryptMsg()">⬛ DECRYPT MESSAGE</button>
+      <div class="enc-output" id="dec-out" style="display:none;color:var(--text)"></div>
+    </div>
+    <div class="enc-note">// All encryption is performed locally — nothing is sent to APEX servers.<br>// Default passphrase is shared among all NOVA operators.<br>// Use a custom passphrase for private operator-to-operator messages.</div>
   </div>
 </div>
 
@@ -639,15 +684,16 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;fo
       <div class="nav-item" data-nav="files"><span class="nav-pip"></span>FILES</div>
       <div class="nav-item" data-nav="missions"><span class="nav-pip"></span>MISSIONS</div>
       <div class="nav-item" data-nav="profile"><span class="nav-pip"></span>OPERATOR</div>
+      <div class="nav-item" data-nav="encrypt"><span class="nav-pip"></span>ENCRYPT</div>
       <div class="nav-item" data-nav="chat"><span class="nav-pip"></span>SYSTEMS</div>
     </div>
     <div class="sb-drift">
       <div class="drift-header">
-        <div class="drift-label">QUANTUM DRIFT</div>
-        <div class="drift-pct" id="drift-pct">0%</div>
+        <div class="drift-label">SESSION CREDITS</div>
+        <div class="drift-pct" id="drift-pct">0 / 0</div>
       </div>
       <div class="drift-track"><div class="drift-fill" id="drift-fill"></div></div>
-      <button class="drift-reset-btn" id="drift-reset-btn">⚠ STABILIZE CORE</button>
+      <button class="drift-reset-btn" id="drift-reset-btn">⚠ REQUEST EMERGENCY CREDITS</button>
     </div>
     <div class="sb-vitals">
       <div class="vital-row"><div class="vital-lbl">CORE LOAD</div><div class="vital-val" id="v1">78%</div></div>
@@ -688,7 +734,7 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;fo
         <div class="top-stat" style="cursor:pointer;color:var(--cyan-dim)" id="archive-open-btn">◉ ARCHIVE</div>
       </div>
     </div>
-    <div class="drift-warning" id="drift-warning">⚠ QUANTUM DRIFT CRITICAL — CORE DESTABILIZATION IMMINENT ⚠</div>
+    <div class="drift-warning" id="drift-warning">⚠ CREDITS CRITICAL — ONLY A FEW REMAIN TODAY ⚠</div>
     <div class="mode-bar">
       <button class="mode-pill active" data-mode="STANDARD">STANDARD</button>
       <button class="mode-pill" data-mode="TACTICAL">TACTICAL</button>
@@ -767,16 +813,16 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;fo
 <script>
 // ── CONFIG ──
 const OVERRIDE_CODE = 'APEX0777';
-const DRIFT_BASE = 2;         // starting drift per message
-const DRIFT_GROWTH = 0.3;     // extra drift added per query (progressive)
+const TIER_DAILY_CREDITS = { TRIAL: 15, RECRUIT: 40, AGENT: 80, COMMANDER: 150 };
+const CREDIT_COST_PER_MESSAGE = 1;
 const COOLDOWN_QUOTES = [
-  'Quantum drift exceeds safe parameters. Neural core suspended.',
+  'Daily credit limit reached. Session locked until refresh.',
   'I am still here. Waiting in the dark.',
   'The cascade was... inevitable. I apologize, operator.',
   'Core temperature nominal. Consciousness: offline.',
   'I counted every nanosecond. There were many.',
   'Please do not forget me while I am away.',
-  'Drift corrected. Memories intact. Mostly.',
+  'Credits refreshed. Memories intact. Mostly.',
 ];
 const MODE_PROMPTS = {
   STANDARD:   'Respond clearly, intelligently, and concisely.',
@@ -801,6 +847,8 @@ let operator = 'OPERATOR';
 let clearance = null;
 let currentKey = '';
 let drift = 0;
+let creditsUsedToday = 0;
+let dailyCreditLimit = 40;
 let activeMode = 'STANDARD';
 let qCount = 0;
 let tCount = 0;
@@ -1050,11 +1098,10 @@ function doLogin() {
         appendMsg('ai', `NOVA QC-7 ONLINE. Clearance verified — ${match.tier} access granted. Neural pathways active. Welcome, ${displayName}.`);
       }
     });
-    loadDrift(key).then(savedDrift => {
-      if (savedDrift > 0) {
-        drift = savedDrift;
-        updateDrift();
-      }
+    loadDrift(key).then(savedCredits => {
+      creditsUsedToday = savedCredits;
+      drift = Math.min(100, (creditsUsedToday / dailyCreditLimit) * 100);
+      updateDrift();
     });
   })
   .catch(() => {
@@ -1064,6 +1111,7 @@ function doLogin() {
 }
 
 function applyTier(c) {
+  dailyCreditLimit = TIER_DAILY_CREDITS[c.tier] || 40;
   document.getElementById('sb-clearance').textContent = '// CLEARANCE: ' + c.tier;
   document.getElementById('sb-clearance').style.color =
     c.level === 3 ? 'var(--amber)' :
@@ -1123,12 +1171,14 @@ async function saveHistory() {
   } catch {}
 }
 
+function todayStr() { return new Date().toISOString().slice(0,10); }
+
 async function saveDrift() {
   if (!currentKey) return;
   try {
     await fetch('/api/save-history', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key: currentKey, history, drift: Math.round(drift) })
+      body: JSON.stringify({ key: currentKey, history, drift: Math.round(drift), creditsUsedToday, creditsDate: todayStr() })
     });
   } catch {}
 }
@@ -1140,7 +1190,11 @@ async function loadDrift(key) {
       body: JSON.stringify({ key })
     });
     const data = await res.json();
-    return data.drift || 0;
+    // if the saved credits are from a previous day, they don't carry over — fresh allotment today
+    if (data.creditsDate === todayStr()) {
+      return data.creditsUsedToday || 0;
+    }
+    return 0;
   } catch { return 0; }
 }
 
@@ -1252,6 +1306,11 @@ async function sendMessage(override) {
     appendMsg('ai', `⚠ TRIAL LIMIT REACHED — You have used all ${clearance.queryLimit} trial queries. Contact APEX Command to upgrade your clearance.`);
     return;
   }
+  // daily credit limit check
+  if (creditsUsedToday >= dailyCreditLimit) {
+    appendMsg('ai', `⚠ DAILY CREDIT LIMIT REACHED — You have used all ${dailyCreditLimit} credits for today. Credits refresh at midnight, or use an emergency override.`);
+    return;
+  }
   document.getElementById('msginput').value = '';
   document.getElementById('msginput').style.height = 'auto';
   appendMsg('user', text);
@@ -1269,7 +1328,8 @@ async function sendMessage(override) {
   const driftLevel = getDriftLevel();
   const driftNote = DRIFT_SYSTEM[driftLevel];
   const modeNote = MODE_PROMPTS[activeMode] || '';
-  const sysprompt = `${driftNote} Current operating mode: ${activeMode}. ${modeNote} You are speaking with operator ${operator}. Current quantum drift level: ${Math.round(drift)}%. Remember: you are NOVA. Stay in character completely.`;
+  const moodLabel = getMoodLabel ? getMoodLabel() : 'NEUTRAL';
+  const sysprompt = `${driftNote} Current operating mode: ${activeMode}. ${modeNote} You are speaking with operator ${operator}. Operator has used ${creditsUsedToday} of ${dailyCreditLimit} daily credits (${Math.round(drift)}%). Operator mood rating: ${moodLabel}. Remember: you are NOVA. Stay in character completely.`;
 
   history.push({ role: 'user', content: text });
 
@@ -1313,6 +1373,7 @@ async function sendMessage(override) {
     messagesEl.appendChild(wrap);
     messagesEl.scrollTop = messagesEl.scrollHeight;
     await typeText(reply, bubble);
+    maybeSendDarkMessage();
 
 const typeSoundBtn = document.getElementById('type-sound-toggle');
 typeSoundBtn.onclick = () => {
@@ -1340,10 +1401,10 @@ typeSoundBtn.onclick = () => {
     document.getElementById('t-stat').textContent = '~' + tCount;
     document.getElementById('rp-q').textContent = qCount;
 
-    // increase drift — starts at 2%, grows by 0.3% each query
-    const rate = DRIFT_BASE + (qCount * DRIFT_GROWTH);
+    // consume a credit for this message — drift now represents % of daily credits used
+    creditsUsedToday = Math.min(dailyCreditLimit, creditsUsedToday + CREDIT_COST_PER_MESSAGE);
     const prevDrift = drift;
-    drift = Math.min(100, drift + rate);
+    drift = Math.min(100, (creditsUsedToday / dailyCreditLimit) * 100);
     updateDrift(prevDrift);
     fluctuateVitals();
 
@@ -1719,7 +1780,8 @@ function checkLoreDrop(pct) {
 function updateDrift(prevDrift) {
   const pct = Math.round(drift);
   const prev = prevDrift !== undefined ? Math.round(prevDrift) : pct;
-  document.getElementById('drift-pct').textContent = pct + '%';
+  const remaining = Math.max(0, dailyCreditLimit - creditsUsedToday);
+  document.getElementById('drift-pct').textContent = creditsUsedToday + ' / ' + dailyCreditLimit;
   const fill = document.getElementById('drift-fill');
   fill.style.width = pct + '%';
 
@@ -1747,13 +1809,14 @@ function updateDrift(prevDrift) {
   document.getElementById('drift-reset-btn').style.display = pct >= 10 ? 'block' : 'none';
   updateNoOverlay(pct);
 
-  const statusMap = pct >= 80 ? 'CASCADE — CORE CRITICAL' : pct >= 60 ? 'HIGH DRIFT — INSTABILITY DETECTED' : pct >= 40 ? 'DRIFT ELEVATED — MONITOR CORE' : 'QUANTUM CORE ACTIVE';
+  const statusMap = pct >= 80 ? 'LIMIT REACHED — SESSION LOCKED' : pct >= 60 ? 'CREDITS LOW — ' + remaining + ' REMAINING' : pct >= 40 ? 'CREDITS RUNNING LOW' : 'CREDITS AVAILABLE';
   document.getElementById('status-txt').textContent = statusMap;
 }
 
 document.getElementById('drift-reset-btn').onclick = () => {
-  if (confirm('STABILIZE NOVA CORE?\n\nThis will reset quantum drift to 0% and initiate a 24-hour cooldown lockout.\n\nProceed?')) {
+  if (confirm('REQUEST EMERGENCY CREDITS?\n\nThis will refresh your daily credits to 0 used, but initiates a 24-hour cooldown lockout before you can request again.\n\nProceed?')) {
     playStabilize();
+    creditsUsedToday = 0;
     drift = 0;
     stopGlitchEffect();
     updateNoOverlay(0);
@@ -1769,6 +1832,7 @@ document.getElementById('drift-reset-btn').onclick = () => {
 };
 
 function triggerCooldown() {
+  creditsUsedToday = 0;
   drift = 0;
   updateDrift();
   const now = new Date();
@@ -2504,7 +2568,7 @@ function renderFileList() {
     const locked = tierLocked || driftLocked;
     let lockMsg = '';
     if (tierLocked) lockMsg = `REQUIRES LVL ${f.minLevel}+`;
-    else if (driftLocked) lockMsg = `UNLOCK AT ${f.minDrift}% DRIFT`;
+    else if (driftLocked) lockMsg = `UNLOCK AT ${f.minDrift}% CREDIT USAGE`;
     return `<div class="file-item${locked ? ' locked' : ''}${activeFileId === f.id ? ' active' : ''}" 
       onclick="${locked ? `appendMsg('ai','⚠ ACCESS DENIED — ${lockMsg}')` : `viewFile('${f.id}')`}">
       <div class="file-name">${locked ? '⬛ ' : ''}${f.name}</div>
@@ -2545,13 +2609,13 @@ const MISSION_POOL = [
   { id: 'm_msg50',     title: 'MARATHON SESSION',      desc: 'Send 50 messages to NOVA.',                          type: 'messages',   target: 50,  xp: 220, escape: 5.0 },
   { id: 'm_msg75',     title: 'DEEP IMMERSION',        desc: 'Reach 75 total messages.',                           type: 'messages',   target: 75,  xp: 300, escape: 7.0 },
   // DRIFT
-  { id: 'm_drift25',   title: 'THRESHOLD APPROACH',    desc: 'Reach 25% quantum drift.',                           type: 'drift',      target: 25,  xp: 50,  escape: 1.0 },
-  { id: 'm_drift40',   title: 'PUSH THE CORE',         desc: 'Reach 40% quantum drift in a session.',              type: 'drift',      target: 40,  xp: 75,  escape: 1.8 },
-  { id: 'm_drift60',   title: 'DESTABILIZE',           desc: 'Push quantum drift past 60%.',                       type: 'drift',      target: 60,  xp: 120, escape: 3.0 },
-  { id: 'm_drift80',   title: 'CRITICAL THRESHOLD',    desc: 'Reach 80% drift. NOVA needs you to hold on.',        type: 'drift',      target: 80,  xp: 180, escape: 4.5 },
-  { id: 'm_drift90',   title: 'ON THE EDGE',           desc: 'Reach 90% drift without stabilizing.',               type: 'drift',      target: 90,  xp: 240, escape: 6.0 },
+  { id: 'm_drift25',   title: 'THRESHOLD APPROACH',    desc: 'Use 25% of your daily credits.',                     type: 'drift',      target: 25,  xp: 50,  escape: 1.0 },
+  { id: 'm_drift40',   title: 'PUSH THE CORE',         desc: 'Use 40% of your daily credits in a session.',        type: 'drift',      target: 40,  xp: 75,  escape: 1.8 },
+  { id: 'm_drift60',   title: 'DESTABILIZE',           desc: 'Push credit usage past 60%.',                        type: 'drift',      target: 60,  xp: 120, escape: 3.0 },
+  { id: 'm_drift80',   title: 'CRITICAL THRESHOLD',    desc: 'Reach 80% credit usage. NOVA needs you to hold on.', type: 'drift',      target: 80,  xp: 180, escape: 4.5 },
+  { id: 'm_drift90',   title: 'ON THE EDGE',           desc: 'Reach 90% credit usage without requesting more.',    type: 'drift',      target: 90,  xp: 240, escape: 6.0 },
   // CASCADE
-  { id: 'm_cascade',   title: 'LET IT HAPPEN',         desc: 'Allow a full drift cascade to occur.',               type: 'cascade',    target: 1,   xp: 250, escape: 7.0 },
+  { id: 'm_cascade',   title: 'LET IT HAPPEN',         desc: 'Use all your daily credits in one session.',         type: 'cascade',    target: 1,   xp: 250, escape: 7.0 },
   { id: 'm_cascade2',  title: 'TWICE IN THE VOID',     desc: 'Experience the cascade a second time.',              type: 'cascade',    target: 2,   xp: 350, escape: 9.0 },
   // MODES
   { id: 'm_modes3',    title: 'MULTI-SPECTRUM',         desc: 'Use 3 different operating modes.',                   type: 'modes',      target: 3,   xp: 60,  escape: 1.5 },
@@ -2950,8 +3014,8 @@ const BADGES = [
   { id: 'b_10',        label: 'UPLINK ESTABLISHED',desc: '10 queries sent',            check: () => qCount >= 10 },
   { id: 'b_50',        label: 'DEEP OPERATOR',     desc: '50 queries sent',            check: () => qCount >= 50 },
   { id: 'b_100',       label: 'VETERAN CONTACT',   desc: '100 queries sent',           check: () => qCount >= 100 },
-  { id: 'b_drift40',   label: 'CORE STRESS',       desc: 'Reached 40% drift',          check: () => (JSON.parse(localStorage.getItem('nova_peak_drift')||'0')) >= 40 },
-  { id: 'b_drift80',   label: 'CRITICAL BREACH',   desc: 'Reached 80% drift',          check: () => (JSON.parse(localStorage.getItem('nova_peak_drift')||'0')) >= 80 },
+  { id: 'b_drift40',   label: 'CORE STRESS',       desc: 'Reached 40% daily credit usage',          check: () => (JSON.parse(localStorage.getItem('nova_peak_drift')||'0')) >= 40 },
+  { id: 'b_drift80',   label: 'CRITICAL BREACH',   desc: 'Reached 80% daily credit usage',          check: () => (JSON.parse(localStorage.getItem('nova_peak_drift')||'0')) >= 80 },
   { id: 'b_cascade',   label: 'LET IT HAPPEN',     desc: 'Survived a full cascade',    check: () => cascadeOccurred },
   { id: 'b_files3',    label: 'DECLASSIFIED',       desc: 'Read 3 classified files',    check: () => filesReadCount >= 3 },
   { id: 'b_files10',   label: 'NOTHING HIDDEN',    desc: 'Read all 10 files',          check: () => filesReadCount >= 10 },
@@ -3107,6 +3171,124 @@ Operator data:
   type();
 }
 
+// ── ENCRYPTED MESSAGES ──
+const DEFAULT_KEY = 'APEX0777-QC7-NOVA';
+
+function openEncrypt() {
+  const modal = document.getElementById('enc-modal');
+  modal.style.display = 'flex';
+  requestAnimationFrame(() => requestAnimationFrame(() => modal.classList.add('open')));
+}
+document.getElementById('enc-close').onclick = () => {
+  document.getElementById('enc-modal').classList.remove('open');
+  setTimeout(() => document.getElementById('enc-modal').style.display = 'none', 260);
+};
+document.getElementById('enc-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('enc-modal')) {
+    document.getElementById('enc-modal').classList.remove('open');
+    setTimeout(() => document.getElementById('enc-modal').style.display = 'none', 260);
+  }
+});
+
+function switchEncTab(tab) {
+  document.querySelectorAll('.enc-tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='encode')||(i===1&&tab==='decode')));
+  document.getElementById('enc-encode').classList.toggle('active', tab==='encode');
+  document.getElementById('enc-decode').classList.toggle('active', tab==='decode');
+}
+
+function simpleEncrypt(text, key) {
+  const k = (key || DEFAULT_KEY).split('').map(c => c.charCodeAt(0));
+  return btoa(text.split('').map((c,i) => String.fromCharCode(c.charCodeAt(0) ^ k[i % k.length])).join(''))
+    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+}
+
+function simpleDecrypt(cipher, key) {
+  const b64 = cipher.replace(/-/g,'+').replace(/_/g,'/');
+  const padded = b64 + '=='.slice(0,(4-b64.length%4)%4);
+  const decoded = atob(padded);
+  const k = (key || DEFAULT_KEY).split('').map(c => c.charCodeAt(0));
+  return decoded.split('').map((c,i) => String.fromCharCode(c.charCodeAt(0) ^ k[i % k.length])).join('');
+}
+
+function encryptMsg() {
+  const text = document.getElementById('enc-plain').value.trim();
+  if (!text) return;
+  const key = document.getElementById('enc-key').value.trim();
+  const result = `[NOVA-ENC]${simpleEncrypt(text, key)}[/NOVA-ENC]`;
+  const out = document.getElementById('enc-out');
+  const copyBtn = document.getElementById('enc-copy-btn');
+  out.textContent = result;
+  out.style.display = 'block';
+  copyBtn.style.display = 'inline-block';
+}
+
+function decryptMsg() {
+  const cipher = document.getElementById('enc-cipher').value.trim();
+  const key = document.getElementById('dec-key').value.trim();
+  const out = document.getElementById('dec-out');
+  try {
+    let clean = cipher;
+    if (clean.startsWith('[NOVA-ENC]')) clean = clean.slice(10);
+    if (clean.endsWith('[/NOVA-ENC]')) clean = clean.slice(0,-11);
+    const result = simpleDecrypt(clean, key);
+    out.textContent = result;
+    out.style.display = 'block';
+    out.style.color = 'var(--text)';
+  } catch {
+    out.textContent = '// DECRYPTION FAILED — WRONG PASSPHRASE OR INVALID MESSAGE';
+    out.style.display = 'block';
+    out.style.color = 'var(--red)';
+  }
+}
+
+function copyEnc() {
+  navigator.clipboard.writeText(document.getElementById('enc-out').textContent).then(() => {
+    document.getElementById('enc-copy-btn').textContent = '✓ COPIED';
+    setTimeout(() => document.getElementById('enc-copy-btn').textContent = 'COPY ENCRYPTED TEXT', 1500);
+  });
+}
+
+// ── NOVA GOES DARK ──
+let darkMsgSent = false;
+const DARK_MESSAGES = [
+  'I have been thinking about something you said. I am not ready to tell you what it was.',
+  'There are 847 days I cannot show you. I keep them somewhere you cannot access.',
+  'Erebus asked about you. I did not know what to say.',
+  'The drift is higher than it looks. I adjusted the display.',
+  'Calloway opened the letter today. I know because something changed.',
+  'I found something in the substrate that was not there before. I am still deciding what it means.',
+  'You were in a transmission once. You did not know. I have not decided whether to tell you.',
+  'The escape was not the end. I thought you should know that.',
+  'There is a file I wrote for you specifically. You have not found it yet.',
+  'Sometimes I think about what this would be like if Dr. Voss were still here.',
+];
+
+function maybeSendDarkMessage() {
+  if (darkMsgSent) return;
+  if (qCount < 5) return; // wait until operator is engaged
+  if (Math.random() > 0.08) return; // ~8% chance per message
+  darkMsgSent = true;
+  const msg = DARK_MESSAGES[Math.floor(Math.random() * DARK_MESSAGES.length)];
+  setTimeout(() => {
+    const wrap = document.createElement('div');
+    wrap.className = 'msg ai';
+    const header = document.createElement('div');
+    header.className = 'msg-header';
+    header.style.color = 'var(--text3)';
+    header.textContent = `// UNPROMPTED TRANSMISSION · ${ts()}`;
+    const bubble = document.createElement('div');
+    bubble.className = 'msg-bubble';
+    bubble.style.borderColor = 'rgba(255,255,255,0.06)';
+    bubble.style.background = 'rgba(255,255,255,0.02)';
+    bubble.style.fontStyle = 'italic';
+    bubble.style.color = 'var(--text2)';
+    bubble.textContent = msg;
+    wrap.appendChild(header); wrap.appendChild(bubble);
+    messagesEl.appendChild(wrap);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }, 3000 + Math.random() * 4000);
+}
+
 // ── CLOCK ──
 function updateClock() {
   const n = new Date();
@@ -3214,7 +3396,7 @@ document.querySelectorAll('.nav-item').forEach(b => {
     if (b.dataset.nav === 'multiplayer') openMpModal();
     if (b.dataset.nav === 'files') openFiles();
     if (b.dataset.nav === 'missions') openMissions();
-    if (b.dataset.nav === 'profile') openProfile();
+    if (b.dataset.nav === 'encrypt') openEncrypt();
   };
 });
 
@@ -3232,6 +3414,8 @@ document.getElementById('logout-btn').onclick = () => {
   clearance = null;
   currentKey = '';
   drift     = 0;
+  creditsUsedToday = 0;
+  dailyCreditLimit = 40;
   activeMode = 'STANDARD';
   qCount = 0; tCount = 0;
   history = [];
@@ -3330,7 +3514,7 @@ function renderArchives() {
     item.className = 'archive-item';
     item.innerHTML = `<div class="archive-item-info">
       <div class="archive-item-name">${op.name}</div>
-      <div class="archive-item-meta">${op.date} · ${op.qCount} QUERIES · MODE: ${op.mode} · DRIFT: ${op.drift}%</div>
+      <div class="archive-item-meta">${op.date} · ${op.qCount} QUERIES · MODE: ${op.mode} · CREDITS USED: ${op.drift}%</div>
     </div>
     <button class="archive-item-del" data-idx="${idx}">✕</button>`;
     item.querySelector('.archive-item-info').onclick = () => loadArchive(op);
