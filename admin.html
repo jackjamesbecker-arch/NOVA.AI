@@ -141,6 +141,40 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
     </div>
   </div>
 
+  <!-- STATUS MESSAGE PANEL -->
+  <div class="panel" style="margin-top:20px">
+    <div class="panel-title">// STATUS PAGE MESSAGE</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start">
+      <div>
+        <div class="field-label" style="margin-bottom:8px">MESSAGE LEVEL</div>
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <button class="btn level-btn" data-level="info" style="background:rgba(0,229,255,0.1);border-color:var(--cyan);color:var(--cyan)">ℹ INFO</button>
+          <button class="btn level-btn" data-level="warning" style="background:transparent;border-color:var(--border);color:var(--text3)">⚠ WARNING</button>
+          <button class="btn level-btn" data-level="critical" style="background:transparent;border-color:var(--border);color:var(--text3)">✕ CRITICAL</button>
+        </div>
+        <div class="field-label" style="margin-bottom:8px">MESSAGE</div>
+        <textarea id="status-msg-input" placeholder="e.g. Scheduled maintenance window 2:00–3:00 UTC" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:12px;padding:10px;resize:none;height:72px;outline:none;margin-bottom:10px"></textarea>
+        <div style="display:flex;gap:8px">
+          <button class="btn" id="status-msg-post-btn" style="background:rgba(0,229,255,0.1);border-color:rgba(0,229,255,0.4);color:var(--cyan)">POST TO STATUS PAGE</button>
+          <button class="btn" id="status-msg-clear-btn" style="background:transparent;border-color:rgba(255,68,68,0.3);color:rgba(255,68,68,0.7)">✕ CLEAR</button>
+        </div>
+      </div>
+      <div>
+        <div class="field-label" style="margin-bottom:8px">CURRENT MESSAGE</div>
+        <div style="background:var(--bg2);border:1px solid var(--border);padding:14px;font-family:'Share Tech Mono',monospace;font-size:11px;line-height:2">
+          <div>LEVEL: <span id="status-msg-level-display" style="color:var(--cyan)">—</span></div>
+          <div>MESSAGE: <span id="status-msg-display" style="color:var(--text3)">—</span></div>
+          <div>POSTED: <span id="status-msg-time" style="color:var(--text3)">—</span></div>
+        </div>
+        <div style="margin-top:10px;font-size:10px;color:var(--text3);font-family:'Share Tech Mono',monospace;letter-spacing:1px;line-height:1.8">
+          // Messages appear instantly on the status page<br>
+          // Clear to remove the message banner
+        </div>
+      </div>
+    </div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--green);margin-top:10px;min-height:16px" id="status-msg-result"></div>
+  </div>
+
   <!-- DOWNTIME PANEL -->
   <div class="panel" style="margin-top:20px">
     <div class="panel-title">// DOWNTIME CONTROL</div>
@@ -391,6 +425,81 @@ document.getElementById('copy-codes-btn').onclick = () => {
     setTimeout(() => document.getElementById('copy-codes-btn').textContent = 'COPY CODES', 1500);
   });
 };
+
+// ── STATUS MESSAGE ──
+let selectedLevel = 'info';
+
+document.querySelectorAll('.level-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    selectedLevel = btn.dataset.level;
+    document.querySelectorAll('.level-btn').forEach(b => {
+      b.style.background = 'transparent';
+      b.style.borderColor = 'var(--border)';
+      b.style.color = 'var(--text3)';
+    });
+    const colors = { info: 'var(--cyan)', warning: 'var(--amber)', critical: 'var(--red)' };
+    btn.style.background = selectedLevel === 'info' ? 'rgba(0,229,255,0.1)' : selectedLevel === 'warning' ? 'rgba(255,170,0,0.1)' : 'rgba(255,68,68,0.1)';
+    btn.style.borderColor = colors[selectedLevel];
+    btn.style.color = colors[selectedLevel];
+  });
+});
+
+async function loadStatusMessage() {
+  try {
+    const res = await fetch('/api/status-message', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get' })
+    });
+    const data = await res.json();
+    const levelColors = { info: 'var(--cyan)', warning: 'var(--amber)', critical: 'var(--red)' };
+    document.getElementById('status-msg-level-display').textContent = data.level ? data.level.toUpperCase() : '—';
+    document.getElementById('status-msg-level-display').style.color = levelColors[data.level] || 'var(--text3)';
+    document.getElementById('status-msg-display').textContent = data.message || '—';
+    document.getElementById('status-msg-time').textContent = data.updatedAt ? new Date(data.updatedAt).toLocaleString() : '—';
+  } catch {}
+}
+
+document.getElementById('status-msg-post-btn').onclick = async () => {
+  const msg = document.getElementById('status-msg-input').value.trim();
+  if (!msg) { alert('Enter a message first.'); return; }
+  const result = document.getElementById('status-msg-result');
+  try {
+    const res = await fetch('/api/status-message', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'set', adminSecret, message: msg, level: selectedLevel })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      result.textContent = '✓ MESSAGE POSTED — visible on status page immediately';
+      result.style.color = 'var(--green)';
+      loadStatusMessage();
+      setTimeout(() => result.textContent = '', 4000);
+    }
+  } catch(e) {
+    result.textContent = '⚠ Failed — ' + e.message;
+    result.style.color = 'var(--red)';
+  }
+};
+
+document.getElementById('status-msg-clear-btn').onclick = async () => {
+  const result = document.getElementById('status-msg-result');
+  try {
+    await fetch('/api/status-message', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'clear', adminSecret })
+    });
+    result.textContent = '✓ MESSAGE CLEARED';
+    result.style.color = 'var(--green)';
+    loadStatusMessage();
+    document.getElementById('status-msg-input').value = '';
+    setTimeout(() => result.textContent = '', 3000);
+  } catch(e) {
+    result.textContent = '⚠ Failed — ' + e.message;
+    result.style.color = 'var(--red)';
+  }
+};
+
+loadStatusMessage();
 
 // ── DOWNTIME ──
 async function loadDowntimeStatus() {

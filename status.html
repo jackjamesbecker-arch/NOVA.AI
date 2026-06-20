@@ -112,6 +112,9 @@ footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:24
 </nav>
 
 <div class="wrap">
+  <!-- ADMIN STATUS MESSAGE BANNER -->
+  <div id="admin-msg-banner" style="display:none;padding:12px 18px;margin-bottom:24px;font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:1px;border-radius:0;line-height:1.6"></div>
+
   <div class="page-tag">SYSTEM STATUS</div>
   <div class="page-title">Core Status</div>
   <div class="page-desc" id="last-checked">// CHECKING SYSTEMS...</div>
@@ -285,6 +288,36 @@ function tick() {
 
 checkStatus();
 tick();
+
+// ── ADMIN STATUS MESSAGE ──
+async function loadAdminMessage() {
+  try {
+    const res = await fetch('/api/status-message', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get' })
+    });
+    const data = await res.json();
+    const banner = document.getElementById('admin-msg-banner');
+    if (data.message) {
+      const colors = {
+        info: { bg: 'rgba(0,229,255,0.06)', border: 'rgba(0,229,255,0.25)', color: '#00e5ff', icon: 'ℹ' },
+        warning: { bg: 'rgba(255,170,0,0.06)', border: 'rgba(255,170,0,0.25)', color: '#ffaa00', icon: '⚠' },
+        critical: { bg: 'rgba(255,68,68,0.06)', border: 'rgba(255,68,68,0.25)', color: '#ff4444', icon: '✕' },
+      };
+      const c = colors[data.level] || colors.info;
+      banner.style.display = 'block';
+      banner.style.background = c.bg;
+      banner.style.border = `1px solid ${c.border}`;
+      banner.style.color = c.color;
+      banner.innerHTML = `<span style="margin-right:8px">${c.icon}</span>${data.message}<span style="margin-left:16px;font-size:10px;opacity:0.5">${new Date(data.updatedAt).toLocaleString()}</span>`;
+    } else {
+      banner.style.display = 'none';
+    }
+  } catch {}
+}
+
+loadAdminMessage();
+setInterval(loadAdminMessage, 15000);
 </script>
 </body>
 </html>
