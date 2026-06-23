@@ -542,17 +542,18 @@ document.getElementById('status-msg-clear-btn').onclick = async () => {
 // ── SERVICE OVERRIDE ──
 async function loadOverride() {
   try {
-    const res = await fetch('/api/status', {
+    const res = await fetch('/api/status-message', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'get-override' })
+      body: JSON.stringify({ action: 'get-services' })
     });
-    currentOverride = await res.json();
-    if (currentOverride) {
+    const data = await res.json();
+    const hasOverride = data.overall && data.overall !== 'auto';
+    if (hasOverride || Object.keys(data.services || {}).length > 0) {
       document.getElementById('override-status').textContent = 'OVERRIDE ACTIVE';
       document.getElementById('override-status').style.color = 'var(--amber)';
-      document.getElementById('override-groq').value = currentOverride.groq || 'online';
-      document.getElementById('override-db').value = currentOverride.database || 'online';
-      document.getElementById('override-overall').value = currentOverride.overall || 'online';
+      document.getElementById('override-groq').value = data.services?.ai || 'online';
+      document.getElementById('override-db').value = data.services?.db || 'online';
+      document.getElementById('override-overall').value = data.overall || 'online';
     } else {
       document.getElementById('override-status').textContent = 'AUTO (LIVE CHECK)';
       document.getElementById('override-status').style.color = 'var(--green)';
@@ -563,15 +564,17 @@ async function loadOverride() {
 document.getElementById('override-apply-btn').onclick = async () => {
   const result = document.getElementById('status-msg-result');
   try {
-    const res = await fetch('/api/status', {
+    const res = await fetch('/api/status-message', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        action: 'set-override', adminSecret,
-        override: {
-          groq: document.getElementById('override-groq').value,
-          database: document.getElementById('override-db').value,
-          overall: document.getElementById('override-overall').value,
-        }
+        action: 'set-services', adminSecret,
+        services: {
+          ai: document.getElementById('override-groq').value,
+          db: document.getElementById('override-db').value,
+          app: 'online',
+          auth: 'online',
+        },
+        overall: document.getElementById('override-overall').value,
       })
     });
     const data = await res.json();
@@ -590,9 +593,9 @@ document.getElementById('override-apply-btn').onclick = async () => {
 document.getElementById('override-clear-btn').onclick = async () => {
   const result = document.getElementById('status-msg-result');
   try {
-    await fetch('/api/status', {
+    await fetch('/api/status-message', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'clear-override', adminSecret })
+      body: JSON.stringify({ action: 'set-services', adminSecret, services: {}, overall: 'auto' })
     });
     result.textContent = '✓ OVERRIDE CLEARED — status page now shows live values';
     result.style.color = 'var(--green)';
