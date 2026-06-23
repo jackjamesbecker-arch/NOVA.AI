@@ -173,6 +173,45 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
       </div>
     </div>
     <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--green);margin-top:10px;min-height:16px" id="status-msg-result"></div>
+
+    <!-- SERVICE OVERRIDE -->
+    <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border)">
+      <div class="panel-title" style="font-size:11px;margin-bottom:14px">// SERVICE STATUS OVERRIDE</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;align-items:end">
+        <div>
+          <div class="field-label" style="margin-bottom:6px">AI ENGINE</div>
+          <select id="override-groq" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:11px;padding:7px;outline:none">
+            <option value="online">ONLINE</option>
+            <option value="degraded">DEGRADED</option>
+            <option value="offline">OFFLINE</option>
+          </select>
+        </div>
+        <div>
+          <div class="field-label" style="margin-bottom:6px">DATABASE</div>
+          <select id="override-db" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:11px;padding:7px;outline:none">
+            <option value="online">ONLINE</option>
+            <option value="degraded">DEGRADED</option>
+            <option value="offline">OFFLINE</option>
+          </select>
+        </div>
+        <div>
+          <div class="field-label" style="margin-bottom:6px">OVERALL</div>
+          <select id="override-overall" style="width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:11px;padding:7px;outline:none">
+            <option value="online">ONLINE</option>
+            <option value="degraded">DEGRADED</option>
+            <option value="offline">OFFLINE</option>
+          </select>
+        </div>
+        <div>
+          <div class="field-label" style="margin-bottom:6px">STATUS</div>
+          <div style="font-family:'Share Tech Mono',monospace;font-size:11px;padding:7px 0" id="override-status">AUTO (LIVE CHECK)</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <button class="btn" id="override-apply-btn" style="background:rgba(255,170,0,0.1);border-color:rgba(255,170,0,0.4);color:var(--amber)">APPLY OVERRIDE</button>
+        <button class="btn" id="override-clear-btn" style="background:transparent;border-color:var(--border);color:var(--text3)">CLEAR — USE LIVE CHECK</button>
+      </div>
+    </div>
   </div>
 
   <!-- DOWNTIME PANEL -->
@@ -426,8 +465,9 @@ document.getElementById('copy-codes-btn').onclick = () => {
   });
 };
 
-// ── STATUS MESSAGE ──
+// ── STATUS MESSAGE & OVERRIDE ──
 let selectedLevel = 'info';
+let currentOverride = null;
 
 document.querySelectorAll('.level-btn').forEach(btn => {
   btn.addEventListener('click', () => {
@@ -446,9 +486,9 @@ document.querySelectorAll('.level-btn').forEach(btn => {
 
 async function loadStatusMessage() {
   try {
-    const res = await fetch('/api/status-message', {
+    const res = await fetch('/api/status', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'get' })
+      body: JSON.stringify({ action: 'get-message' })
     });
     const data = await res.json();
     const levelColors = { info: 'var(--cyan)', warning: 'var(--amber)', critical: 'var(--red)' };
@@ -464,9 +504,9 @@ document.getElementById('status-msg-post-btn').onclick = async () => {
   if (!msg) { alert('Enter a message first.'); return; }
   const result = document.getElementById('status-msg-result');
   try {
-    const res = await fetch('/api/status-message', {
+    const res = await fetch('/api/status', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'set', adminSecret, message: msg, level: selectedLevel })
+      body: JSON.stringify({ action: 'set-message', adminSecret, message: msg, level: selectedLevel })
     });
     const data = await res.json();
     if (data.ok) {
@@ -484,9 +524,9 @@ document.getElementById('status-msg-post-btn').onclick = async () => {
 document.getElementById('status-msg-clear-btn').onclick = async () => {
   const result = document.getElementById('status-msg-result');
   try {
-    await fetch('/api/status-message', {
+    await fetch('/api/status', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'clear', adminSecret })
+      body: JSON.stringify({ action: 'clear-message', adminSecret })
     });
     result.textContent = '✓ MESSAGE CLEARED';
     result.style.color = 'var(--green)';
@@ -499,7 +539,73 @@ document.getElementById('status-msg-clear-btn').onclick = async () => {
   }
 };
 
+// ── SERVICE OVERRIDE ──
+async function loadOverride() {
+  try {
+    const res = await fetch('/api/status', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get-override' })
+    });
+    currentOverride = await res.json();
+    if (currentOverride) {
+      document.getElementById('override-status').textContent = 'OVERRIDE ACTIVE';
+      document.getElementById('override-status').style.color = 'var(--amber)';
+      document.getElementById('override-groq').value = currentOverride.groq || 'online';
+      document.getElementById('override-db').value = currentOverride.database || 'online';
+      document.getElementById('override-overall').value = currentOverride.overall || 'online';
+    } else {
+      document.getElementById('override-status').textContent = 'AUTO (LIVE CHECK)';
+      document.getElementById('override-status').style.color = 'var(--green)';
+    }
+  } catch {}
+}
+
+document.getElementById('override-apply-btn').onclick = async () => {
+  const result = document.getElementById('status-msg-result');
+  try {
+    const res = await fetch('/api/status', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'set-override', adminSecret,
+        override: {
+          groq: document.getElementById('override-groq').value,
+          database: document.getElementById('override-db').value,
+          overall: document.getElementById('override-overall').value,
+        }
+      })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      result.textContent = '✓ STATUS OVERRIDE APPLIED — status page now shows manual values';
+      result.style.color = 'var(--amber)';
+      loadOverride();
+      setTimeout(() => result.textContent = '', 4000);
+    }
+  } catch(e) {
+    result.textContent = '⚠ Failed — ' + e.message;
+    result.style.color = 'var(--red)';
+  }
+};
+
+document.getElementById('override-clear-btn').onclick = async () => {
+  const result = document.getElementById('status-msg-result');
+  try {
+    await fetch('/api/status', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'clear-override', adminSecret })
+    });
+    result.textContent = '✓ OVERRIDE CLEARED — status page now shows live values';
+    result.style.color = 'var(--green)';
+    loadOverride();
+    setTimeout(() => result.textContent = '', 4000);
+  } catch(e) {
+    result.textContent = '⚠ Failed — ' + e.message;
+    result.style.color = 'var(--red)';
+  }
+};
+
 loadStatusMessage();
+loadOverride();
 
 // ── DOWNTIME ──
 async function loadDowntimeStatus() {

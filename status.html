@@ -254,26 +254,49 @@ function setOverall(status) {
 }
 
 async function checkStatus() {
+  // first load admin overrides
+  let overrides = { services: {}, overall: 'auto' };
+  try {
+    const or = await fetch('/api/status-message', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get-services' })
+    });
+    overrides = await or.json();
+  } catch {}
+
   try {
     const res = await fetch('/api/status');
     const data = await res.json();
 
-    setService('svc-ai', 'badge-ai', 'lat-ai', data.groq.status, data.groq.latency);
-    setService('svc-db', 'badge-db', 'lat-db', data.database.status, data.database.latency);
-    setOverall(data.overall);
+    // apply overrides or live data
+    const aiStatus = overrides.services?.ai || data.groq.status;
+    const dbStatus = overrides.services?.db || data.database.status;
+    const appStatus = overrides.services?.app || 'online';
+    const authStatus = overrides.services?.auth || 'online';
 
-    const pctAi = renderBars('bars-ai', data.groq.status);
-    const pctDb = renderBars('bars-db', data.database.status);
+    setService('svc-ai', 'badge-ai', 'lat-ai', aiStatus, data.groq.latency);
+    setService('svc-db', 'badge-db', 'lat-db', dbStatus, data.database.latency);
+    setService('svc-app', 'badge-app', null, appStatus, null);
+    setService('svc-auth', 'badge-auth', null, authStatus, null);
+
+    // overall: admin override or auto-calculate
+    if (overrides.overall && overrides.overall !== 'auto') {
+      setOverall(overrides.overall);
+    } else {
+      setOverall(data.overall);
+    }
+
+    const pctAi = renderBars('bars-ai', aiStatus);
+    const pctDb = renderBars('bars-db', dbStatus);
     document.getElementById('pct-ai').textContent = pctAi + '%';
     document.getElementById('pct-db').textContent = pctDb + '%';
 
     const now = new Date();
-    document.getElementById('last-checked').textContent =
-      `// LAST CHECKED: ${now.toUTCString()}`;
+    document.getElementById('last-checked').textContent = `// LAST CHECKED: ${now.toUTCString()}`;
   } catch {
-    setOverall('offline');
-    setService('svc-ai', 'badge-ai', 'lat-ai', 'offline', null);
-    setService('svc-db', 'badge-db', 'lat-db', 'offline', null);
+    setOverall(overrides.overall !== 'auto' ? overrides.overall : 'offline');
+    setService('svc-ai', 'badge-ai', 'lat-ai', overrides.services?.ai || 'offline', null);
+    setService('svc-db', 'badge-db', 'lat-db', overrides.services?.db || 'offline', null);
   }
 }
 
@@ -292,9 +315,9 @@ tick();
 // ── ADMIN STATUS MESSAGE ──
 async function loadAdminMessage() {
   try {
-    const res = await fetch('/api/status-message', {
+    const res = await fetch('/api/status', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'get' })
+      body: JSON.stringify({ action: 'get-message' })
     });
     const data = await res.json();
     const banner = document.getElementById('admin-msg-banner');
