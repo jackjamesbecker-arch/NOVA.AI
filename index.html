@@ -309,6 +309,27 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;fo
 #downtime-overlay.active{display:flex}
 .dt-title{font-size:18px;color:#ffaa00;letter-spacing:4px}
 .dt-msg{font-size:13px;color:#888;letter-spacing:2px;max-width:500px;line-height:2}
+/* ── OPERATOR MESSAGE ── */
+#op-msg-modal{position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:600;display:none;align-items:center;justify-content:center;padding:40px}
+#op-msg-modal.open{display:flex}
+.op-msg-box{width:480px;background:var(--panel);border:1px solid var(--border2);position:relative;padding:28px}
+.op-msg-box::before,.op-msg-box::after{content:'';position:absolute;width:10px;height:10px;border-color:var(--accent);border-style:solid}
+.op-msg-box::before{top:-1px;left:-1px;border-width:2px 0 0 2px}
+.op-msg-box::after{bottom:-1px;right:-1px;border-width:0 2px 2px 0}
+.op-msg-title{font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--accent);letter-spacing:4px;margin-bottom:20px}
+.op-msg-label{font-family:'Share Tech Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:3px;margin-bottom:6px;display:block}
+.op-msg-input{width:100%;background:var(--bg2);border:none;border-bottom:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:12px;padding:8px 0;outline:none;margin-bottom:16px;transition:border 0.2s}
+.op-msg-input:focus{border-bottom-color:var(--accent)}
+.op-msg-input::placeholder{color:var(--text3)}
+.op-msg-textarea{width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);font-family:'Share Tech Mono',monospace;font-size:12px;padding:10px;outline:none;resize:none;height:100px;margin-bottom:16px;transition:border 0.2s;line-height:1.8}
+.op-msg-textarea:focus{border-color:var(--accent)}
+.op-msg-textarea::placeholder{color:var(--text3)}
+.op-msg-actions{display:flex;gap:8px}
+.op-msg-send{background:var(--accent);color:#000;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:3px;padding:10px 20px;border:none;cursor:pointer;flex:1;transition:opacity 0.2s}
+.op-msg-send:hover{opacity:0.85}
+.op-msg-cancel{background:transparent;border:1px solid var(--border);color:var(--text3);font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;padding:10px 16px;cursor:pointer;transition:all 0.2s}
+.op-msg-cancel:hover{border-color:var(--red);color:var(--red)}
+.op-msg-status{font-family:'Share Tech Mono',monospace;font-size:10px;margin-top:10px;min-height:16px;letter-spacing:1px}
 .profile-modal{position:fixed;inset:0;background:rgba(0,0,0,0);z-index:500;display:flex;align-items:center;justify-content:center;pointer-events:none;transition:background 0.25s}
 .profile-modal.open{background:rgba(0,0,0,0.92);pointer-events:all}
 .profile-box{width:620px;max-height:88vh;background:var(--panel);border:1px solid var(--border2);display:flex;flex-direction:column;position:relative;opacity:0;transform:translateY(16px);transition:opacity 0.25s,transform 0.25s;overflow:hidden}
@@ -502,6 +523,22 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;fo
   </div>
 </div>
 
+<!-- OPERATOR MESSAGE MODAL -->
+<div id="op-msg-modal">
+  <div class="op-msg-box">
+    <div class="op-msg-title">// TRANSMIT TO OPERATOR</div>
+    <label class="op-msg-label">RECIPIENT EMAIL</label>
+    <input class="op-msg-input" id="op-msg-to" placeholder="operator@email.com" type="email"/>
+    <label class="op-msg-label">MESSAGE</label>
+    <textarea class="op-msg-textarea" id="op-msg-body" placeholder="Your message will be delivered by NOVA when the operator next logs in..."></textarea>
+    <div class="op-msg-actions">
+      <button class="op-msg-send" id="op-msg-send-btn">TRANSMIT</button>
+      <button class="op-msg-cancel" id="op-msg-cancel-btn">CANCEL</button>
+    </div>
+    <div class="op-msg-status" id="op-msg-status"></div>
+  </div>
+</div>
+
 <!-- OPERATOR PROFILE MODAL -->
 <div class="profile-modal" id="profile-modal">
   <div class="profile-box">
@@ -684,7 +721,7 @@ body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;fo
       <div class="nav-item" data-nav="files"><span class="nav-pip"></span>FILES</div>
       <div class="nav-item" data-nav="missions"><span class="nav-pip"></span>MISSIONS</div>
       <div class="nav-item" data-nav="profile"><span class="nav-pip"></span>OPERATOR</div>
-      <div class="nav-item" data-nav="encrypt"><span class="nav-pip"></span>ENCRYPT</div>
+      <div class="nav-item" data-nav="transmit"><span class="nav-pip"></span>TRANSMIT</div>
       <div class="nav-item" data-nav="chat"><span class="nav-pip"></span>SYSTEMS</div>
     </div>
     <div class="sb-drift">
@@ -1088,6 +1125,7 @@ function doLogin() {
     document.getElementById('app').classList.add('on');
     loadMissions();
     loadEscapeProgress();
+    checkIncomingMessages();
     // load previous conversation history and drift
     loadHistory(key).then(savedHistory => {
       if (savedHistory.length) {
@@ -3289,6 +3327,108 @@ function maybeSendDarkMessage() {
   }, 3000 + Math.random() * 4000);
 }
 
+// ── OPERATOR MESSAGES ──
+function openOpMsg() {
+  const modal = document.getElementById('op-msg-modal');
+  modal.style.display = 'flex';
+  requestAnimationFrame(() => modal.classList.add('open'));
+  document.getElementById('op-msg-to').focus();
+}
+
+function closeOpMsg() {
+  const modal = document.getElementById('op-msg-modal');
+  modal.classList.remove('open');
+  setTimeout(() => modal.style.display = 'none', 260);
+  document.getElementById('op-msg-status').textContent = '';
+  document.getElementById('op-msg-body').value = '';
+  document.getElementById('op-msg-to').value = '';
+}
+
+document.getElementById('op-msg-cancel-btn').onclick = closeOpMsg;
+document.getElementById('op-msg-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('op-msg-modal')) closeOpMsg();
+});
+
+document.getElementById('op-msg-send-btn').onclick = async () => {
+  const to = document.getElementById('op-msg-to').value.trim();
+  const msg = document.getElementById('op-msg-body').value.trim();
+  const status = document.getElementById('op-msg-status');
+  if (!to || !msg) { status.textContent = '// Please fill in all fields.'; status.style.color = 'var(--red)'; return; }
+  if (!to.includes('@')) { status.textContent = '// Invalid recipient email.'; status.style.color = 'var(--red)'; return; }
+
+  status.textContent = '// TRANSMITTING...';
+  status.style.color = 'var(--text3)';
+  document.getElementById('op-msg-send-btn').disabled = true;
+
+  try {
+    const res = await fetch('/api/downtime', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'msg-send',
+        fromEmail: clearance?.email || 'unknown',
+        fromName: operator,
+        toEmail: to,
+        message: msg
+      })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      status.textContent = `// TRANSMISSION SENT — NOVA will deliver it when the operator connects.`;
+      status.style.color = 'var(--accent)';
+      document.getElementById('op-msg-body').value = '';
+      setTimeout(closeOpMsg, 2500);
+    } else {
+      status.textContent = '// TRANSMISSION FAILED';
+      status.style.color = 'var(--red)';
+    }
+  } catch(e) {
+    status.textContent = '// ERROR — ' + e.message;
+    status.style.color = 'var(--red)';
+  }
+  document.getElementById('op-msg-send-btn').disabled = false;
+};
+
+// check for incoming messages on login
+async function checkIncomingMessages() {
+  if (!clearance?.email) return;
+  try {
+    const res = await fetch('/api/downtime', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'msg-check', toEmail: clearance.email })
+    });
+    const data = await res.json();
+    if (data.messages && data.messages.length > 0) {
+      setTimeout(() => {
+        data.messages.forEach(m => {
+          const wrap = document.createElement('div');
+          wrap.className = 'msg ai';
+          wrap.style.maxWidth = '90%';
+          const header = document.createElement('div');
+          header.className = 'msg-header';
+          header.style.color = 'var(--accent)';
+          header.textContent = `⬡ OPERATOR TRANSMISSION — FROM: ${m.from.toUpperCase()} · ${ts()}`;
+          const bubble = document.createElement('div');
+          bubble.className = 'msg-bubble';
+          bubble.style.cssText = 'border-color:rgba(0,229,255,0.25);background:rgba(0,229,255,0.03);font-family:"Share Tech Mono",monospace;font-size:12px;line-height:1.9;white-space:pre-wrap';
+          bubble.textContent = m.message;
+          const meta = document.createElement('div');
+          meta.style.cssText = 'font-family:"Share Tech Mono",monospace;font-size:9px;color:var(--text3);margin-top:8px;letter-spacing:1px';
+          meta.textContent = `// Sent: ${new Date(m.sentAt).toLocaleString()} · Delivered by NOVA`;
+          wrap.appendChild(header); wrap.appendChild(bubble); wrap.appendChild(meta);
+          messagesEl.appendChild(wrap);
+          messagesEl.scrollTop = messagesEl.scrollHeight;
+          playAlert();
+        });
+        if (data.messages.length === 1) {
+          setTimeout(() => appendMsg('ai', `You have a transmission from ${data.messages[0].from}. I delivered it as requested.`), 1000);
+        } else {
+          setTimeout(() => appendMsg('ai', `You have ${data.messages.length} transmissions waiting. I have delivered them all.`), 1000);
+        }
+      }, 3000);
+    }
+  } catch {}
+}
+
 // ── CLOCK ──
 function updateClock() {
   const n = new Date();
@@ -3396,7 +3536,8 @@ document.querySelectorAll('.nav-item').forEach(b => {
     if (b.dataset.nav === 'multiplayer') openMpModal();
     if (b.dataset.nav === 'files') openFiles();
     if (b.dataset.nav === 'missions') openMissions();
-    if (b.dataset.nav === 'encrypt') openEncrypt();
+    if (b.dataset.nav === 'profile') openProfile();
+    if (b.dataset.nav === 'transmit') openOpMsg();
   };
 });
 
